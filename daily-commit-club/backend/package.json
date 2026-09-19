@@ -1,0 +1,27 @@
+{
+  "name": "daily-commit-club-backend",
+  "version": "1.0.0",
+  "description": "Backend foundation for Daily Commit Club - Your GitHub activity keeps your world alive.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed:buildings": "node src/scripts/seedBuildings.js"
+  },
+  "dependencies": {
+    "@octokit/graphql": "^8.2.1",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.12.1",
+    "morgan": "^1.10.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.0"
+  },
+  "devDependencies": {}
+}
