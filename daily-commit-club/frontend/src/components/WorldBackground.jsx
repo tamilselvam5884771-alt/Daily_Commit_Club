@@ -1,4 +1,5 @@
 import React from 'react';
+import { getTimeOfDay, TIME_OF_DAY_STYLES } from '../services/timeOfDayService';
 
 /**
  * SeasonEnvironment Component
@@ -50,22 +51,40 @@ export const SeasonEnvironment = ({ season = 'spring' }) => {
 
 /**
  * WorldBackground Component
- * Full-screen parallax background scene with stars, drifting fog, clouds, and season atmosphere
+ * Renders dynamic day/night atmosphere, sun/moon positioning, star layers, fog, and seasonal ambient environments.
  */
 export const WorldBackground = ({ season = 'spring', children }) => {
+  const timeOfDay = getTimeOfDay();
+  const timeStyle = TIME_OF_DAY_STYLES[timeOfDay] || TIME_OF_DAY_STYLES.night;
+
   return (
-    <div className="relative min-h-screen w-full bg-[#070a12] text-slate-100 overflow-hidden select-none">
-      {/* Deep Atmospheric Base Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0b0f19] via-[#090d16] to-[#05070e]" />
+    <div className={`relative min-h-screen w-full bg-gradient-to-b ${timeStyle.gradient} text-slate-100 overflow-hidden select-none`}>
+      {/* Time of Day Atmosphere Tint Overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-colors duration-1000"
+        style={{ backgroundColor: timeStyle.skyTint }}
+      />
+
+      {/* Sun / Moon Orb Component */}
+      {timeStyle.showMoon ? (
+        <div className="absolute top-10 right-20 w-16 h-16 rounded-full bg-gradient-to-tr from-amber-100 to-amber-200 shadow-[0_0_50px_rgba(254,243,199,0.6)] opacity-80 pointer-events-none" />
+      ) : (
+        <div
+          className="absolute top-12 left-1/4 w-24 h-24 rounded-full bg-gradient-to-tr from-amber-300 via-yellow-200 to-amber-400 shadow-[0_0_80px_rgba(251,191,36,0.6)] pointer-events-none transition-opacity duration-1000"
+          style={{ opacity: timeStyle.sunOpacity }}
+        />
+      )}
 
       {/* Twinkling Star Layer */}
-      <div className="absolute inset-0 pointer-events-none opacity-40">
-        <div className="absolute top-12 left-16 w-1 h-1 bg-amber-200 rounded-full animate-star" />
-        <div className="absolute top-24 left-1/3 w-1.5 h-1.5 bg-amber-100 rounded-full animate-star" />
-        <div className="absolute top-36 right-1/4 w-1 h-1 bg-blue-200 rounded-full animate-star" />
-        <div className="absolute top-10 right-12 w-2 h-2 bg-yellow-100 rounded-full animate-star" />
-        <div className="absolute top-48 left-2/3 w-1 h-1 bg-white rounded-full animate-star" />
-      </div>
+      {(timeOfDay === 'night' || timeOfDay === 'evening') && (
+        <div className="absolute inset-0 pointer-events-none opacity-50">
+          <div className="absolute top-12 left-16 w-1 h-1 bg-amber-200 rounded-full animate-star" />
+          <div className="absolute top-24 left-1/3 w-1.5 h-1.5 bg-amber-100 rounded-full animate-star" />
+          <div className="absolute top-36 right-1/4 w-1 h-1 bg-blue-200 rounded-full animate-star" />
+          <div className="absolute top-10 right-12 w-2 h-2 bg-yellow-100 rounded-full animate-star" />
+          <div className="absolute top-48 left-2/3 w-1 h-1 bg-white rounded-full animate-star" />
+        </div>
+      )}
 
       {/* Drifting Clouds & Fog */}
       <div className="absolute inset-0 pointer-events-none opacity-20 animate-fog">
