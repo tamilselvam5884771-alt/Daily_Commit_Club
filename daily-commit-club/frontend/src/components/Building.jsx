@@ -1,10 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-
-/**
- * Reusable <Building /> Component
- * Renders 10 visually distinct SVG illustrated building silhouettes with monolithic color themes and health damage states.
- */
+import { soundManager } from '../utils/soundManager';
 
 const THEME_CLASSES = {
   Amber: 'theme-amber',
@@ -39,80 +35,102 @@ export const Building = ({
   destroyed = false,
   owner = null,
   isSelected = false,
-  isHovered = false,
   onClick = () => {}
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const num = building?.buildingNumber || 1;
   const themeName = themeOverride || building?.theme || 'Amber';
   const theme = THEME_COLORS[themeName] || THEME_COLORS.Amber;
-  const isHealthy = health > 60 && !destroyed;
-  const isDamaged = health <= 60 && health > 0 && !destroyed;
+
+  // 5 Health Tiers
+  const isHealthy = health >= 75 && !destroyed;
+  const isMinorDamage = health < 75 && health >= 50 && !destroyed;
+  const isDamaged = health < 50 && health >= 25 && !destroyed;
+  const isCritical = health < 25 && health > 0 && !destroyed;
   const isDestroyed = destroyed || health === 0;
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    soundManager.playHover();
+  };
+
+  const handleClick = () => {
+    soundManager.playOpen();
+    onClick();
+  };
 
   return (
     <motion.div
-      onClick={onClick}
-      whileHover={{ scale: 1.05 }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
+      whileHover={{ y: -8, scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
+      animate={isCritical ? { x: [-2, 2, -2] } : {}}
+      transition={isCritical ? { repeat: Infinity, duration: 0.15 } : { duration: 0.3 }}
       className={`relative cursor-pointer group select-none ${THEME_CLASSES[themeName] || ''}`}
       style={{ width: '180px', height: '220px' }}
     >
-      {/* Background Aura Glow */}
+      {/* Background Glow Ring */}
       <div
-        className="absolute inset-0 rounded-full blur-xl opacity-30 transition-opacity group-hover:opacity-70"
+        className={`absolute inset-0 rounded-full blur-xl transition-opacity duration-500 ${
+          isHovered || isSelected ? 'opacity-90 scale-110' : 'opacity-30'
+        }`}
         style={{ background: theme.glow }}
       />
+
+      {/* Chimney Smoke Effect for Healthy Buildings */}
+      {isHealthy && (
+        <div className="absolute top-2 right-10 pointer-events-none z-10">
+          <div className="w-2 h-2 rounded-full bg-slate-400/40 animate-smoke" />
+        </div>
+      )}
 
       {/* Building SVG Silhouette Container */}
       <div className="relative w-full h-full flex flex-col items-center justify-end">
         {isDestroyed ? (
-          /* Destroyed Collapsed Structure */
+          /* Destroyed Debris Structure */
           <svg viewBox="0 0 100 100" className="w-40 h-32 text-slate-700">
-            <path d="M 20 90 L 35 70 L 50 85 L 75 75 L 85 90 Z" fill="#1e293b" stroke="#334155" strokeWidth="2" />
-            <circle cx="30" cy="80" r="4" fill="#0f172a" />
-            <circle cx="65" cy="82" r="6" fill="#0f172a" />
-            <line x1="40" y1="90" x2="45" y2="70" stroke="#ef4444" strokeWidth="2" />
+            <path d="M 15 90 L 35 65 L 50 85 L 75 70 L 90 90 Z" fill="#1e293b" stroke="#334155" strokeWidth="2" />
+            <circle cx="28" cy="82" r="5" fill="#0f172a" />
+            <circle cx="68" cy="85" r="7" fill="#0f172a" />
+            <line x1="38" y1="90" x2="42" y2="68" stroke="#ef4444" strokeWidth="2.5" />
           </svg>
         ) : (
-          /* Distinct Illustrated Silhouettes 1-10 */
           <svg viewBox="0 0 120 150" className="w-full h-full drop-shadow-2xl">
-            {/* Base Foundation */}
+            {/* Foundation Base */}
             <rect x="15" y="130" width="90" height="12" rx="2" fill="#0f172a" stroke={theme.primary} strokeWidth="1.5" />
 
-            {/* Silhouette Switch */}
+            {/* 10 Unique Silhouettes */}
             {num === 1 && (
-              /* 01: Observatory Dome */
               <g>
                 <rect x="30" y="60" width="60" height="70" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <path d="M 30 60 A 30 30 0 0 1 90 60 Z" fill={theme.primary} opacity="0.9" />
                 <line x1="60" y1="30" x2="60" y2="15" stroke={theme.light} strokeWidth="3" />
                 <circle cx="60" cy="12" r="3" fill={theme.light} />
-                <circle cx="60" cy="80" r="10" fill={isHealthy ? theme.light : '#334155'} />
+                <circle cx="60" cy="80" r="10" fill={isHealthy || isHovered ? theme.light : '#334155'} />
               </g>
             )}
 
             {num === 2 && (
-              /* 02: Forest House */
               <g>
                 <path d="M 20 80 L 60 25 L 100 80 Z" fill={theme.primary} />
                 <rect x="30" y="80" width="60" height="50" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <rect x="50" y="95" width="20" height="35" fill={theme.primary} />
-                <circle cx="60" cy="55" r="7" fill={isHealthy ? theme.light : '#1e293b'} />
+                <circle cx="60" cy="55" r="7" fill={isHealthy || isHovered ? theme.light : '#1e293b'} />
               </g>
             )}
 
             {num === 3 && (
-              /* 03: Spire Watchtower */
               <g>
                 <rect x="40" y="40" width="40" height="90" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <polygon points="40,40 60,5 80,40" fill={theme.primary} />
-                <rect x="52" y="60" width="16" height="20" fill={isHealthy ? theme.light : '#1e293b'} rx="8" />
-                <rect x="52" y="95" width="16" height="20" fill={isHealthy ? theme.light : '#1e293b'} rx="8" />
+                <rect x="52" y="60" width="16" height="20" fill={isHealthy || isHovered ? theme.light : '#1e293b'} rx="8" />
+                <rect x="52" y="95" width="16" height="20" fill={isHealthy || isHovered ? theme.light : '#1e293b'} rx="8" />
               </g>
             )}
 
             {num === 4 && (
-              /* 04: Sapphire Castle */
               <g>
                 <rect x="25" y="55" width="70" height="75" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <rect x="20" y="35" width="20" height="20" fill={theme.primary} />
@@ -124,29 +142,26 @@ export const Building = ({
             )}
 
             {num === 5 && (
-              /* 05: Library of Arcana */
               <g>
                 <rect x="25" y="50" width="70" height="80" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <polygon points="20,50 60,20 100,50" fill={theme.primary} />
                 <line x1="35" y1="50" x2="35" y2="130" stroke={theme.primary} strokeWidth="2" />
                 <line x1="85" y1="50" x2="85" y2="130" stroke={theme.primary} strokeWidth="2" />
-                <rect x="50" y="70" width="20" height="30" fill={isHealthy ? theme.light : '#1e293b'} />
+                <rect x="50" y="70" width="20" height="30" fill={isHealthy || isHovered ? theme.light : '#1e293b'} />
               </g>
             )}
 
             {num === 6 && (
-              /* 06: Copper Workshop */
               <g>
                 <rect x="25" y="65" width="70" height="65" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <polygon points="20,65 60,35 100,65" fill={theme.primary} />
                 <rect x="75" y="25" width="12" height="30" fill={theme.dark} stroke={theme.primary} strokeWidth="1.5" />
-                <circle cx="45" cy="85" r="8" fill={isHealthy ? theme.light : '#1e293b'} />
-                <circle cx="75" cy="85" r="8" fill={isHealthy ? theme.light : '#1e293b'} />
+                <circle cx="45" cy="85" r="8" fill={isHealthy || isHovered ? theme.light : '#1e293b'} />
+                <circle cx="75" cy="85" r="8" fill={isHealthy || isHovered ? theme.light : '#1e293b'} />
               </g>
             )}
 
             {num === 7 && (
-              /* 07: Watermill Keep */
               <g>
                 <rect x="35" y="50" width="60" height="80" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <polygon points="30,50 65,20 100,50" fill={theme.primary} />
@@ -157,17 +172,15 @@ export const Building = ({
             )}
 
             {num === 8 && (
-              /* 08: Crimson Bastion */
               <g>
                 <rect x="30" y="45" width="60" height="85" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <polygon points="25,45 60,10 95,45" fill={theme.primary} />
-                <rect x="50" y="60" width="20" height="15" fill={isHealthy ? theme.light : '#1e293b'} />
-                <rect x="50" y="85" width="20" height="15" fill={isHealthy ? theme.light : '#1e293b'} />
+                <rect x="50" y="60" width="20" height="15" fill={isHealthy || isHovered ? theme.light : '#1e293b'} />
+                <rect x="50" y="85" width="20" height="15" fill={isHealthy || isHovered ? theme.light : '#1e293b'} />
               </g>
             )}
 
             {num === 9 && (
-              /* 09: Garden Grove Sanctuary */
               <g>
                 <path d="M 30 70 Q 60 30 90 70 Z" fill={theme.primary} />
                 <rect x="30" y="70" width="60" height="60" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
@@ -177,25 +190,27 @@ export const Building = ({
             )}
 
             {num === 10 && (
-              /* 10: Clock Tower Apex */
               <g>
                 <rect x="40" y="35" width="40" height="95" fill={theme.dark} stroke={theme.primary} strokeWidth="2" />
                 <polygon points="35,35 60,5 85,35" fill={theme.primary} />
-                <circle cx="60" cy="55" r="10" fill={isHealthy ? theme.light : '#1e293b'} stroke={theme.primary} strokeWidth="1.5" />
+                <circle cx="60" cy="55" r="10" fill={isHealthy || isHovered ? theme.light : '#1e293b'} stroke={theme.primary} strokeWidth="1.5" />
                 <line x1="60" y1="55" x2="60" y2="49" stroke="#000" strokeWidth="2" />
                 <line x1="60" y1="55" x2="64" y2="55" stroke="#000" strokeWidth="2" />
               </g>
             )}
 
-            {/* Minor Crack Overlays if Damaged */}
-            {isDamaged && (
+            {/* Cracks Visual Overlays for Damaged Tiers */}
+            {(isMinorDamage || isDamaged || isCritical) && (
               <path d="M 40 70 L 48 80 L 44 95" stroke="#ef4444" strokeWidth="2" fill="none" />
+            )}
+            {(isDamaged || isCritical) && (
+              <path d="M 70 50 L 62 65 L 68 80" stroke="#ef4444" strokeWidth="2" fill="none" />
             )}
           </svg>
         )}
       </div>
 
-      {/* Building Label Header */}
+      {/* Building Header Label */}
       <div className="mt-2 text-center">
         <div className="text-xs font-bold uppercase tracking-widest text-slate-300">
           Building #{num}
@@ -203,8 +218,7 @@ export const Building = ({
         <div className="text-sm font-semibold truncate px-1" style={{ color: theme.primary }}>
           {building?.name || `Structure ${num}`}
         </div>
-        
-        {/* Owner Avatar & Username */}
+
         {owner ? (
           <div className="mt-1 flex items-center justify-center gap-1.5">
             <img
@@ -219,12 +233,24 @@ export const Building = ({
         )}
       </div>
 
-      {/* Health Bar Overlay */}
+      {/* In-World Hover Interactive Tooltip */}
+      {isHovered && owner && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute -top-12 left-1/2 -translate-x-1/2 z-30 px-3 py-1 bg-slate-900/95 border border-amber-400/80 rounded-xl shadow-2xl text-[11px] font-bold text-amber-300 whitespace-nowrap flex items-center gap-1.5 pointer-events-none"
+        >
+          <span>@{owner.githubUsername}</span>
+          <span className="text-amber-400">🔥 {owner.currentStreak || 0}d</span>
+        </motion.div>
+      )}
+
+      {/* Health Bar */}
       <div className="absolute top-0 right-0 left-0 flex justify-center">
         <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
           <div
             className={`h-full transition-all duration-500 ${
-              health > 60 ? 'bg-emerald-500' : health > 30 ? 'bg-amber-500' : 'bg-rose-600'
+              health >= 75 ? 'bg-emerald-500' : health >= 40 ? 'bg-amber-500' : 'bg-rose-600'
             }`}
             style={{ width: `${health}%` }}
           />
