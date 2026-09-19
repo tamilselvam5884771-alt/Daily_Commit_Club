@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import gsap from 'gsap';
 import { WorldBackground } from '../components/WorldBackground';
 import { Building } from '../components/Building';
 import { MemberCard } from '../components/MemberCard';
 import { MeteorSequence } from '../components/MeteorSequence';
 import { SuccessSequence } from '../components/SuccessSequence';
+import { NotificationDrawer } from '../components/NotificationDrawer';
 import { useWorld } from '../context/WorldContext';
 import { useAuth } from '../context/AuthContext';
 import { simulateSuccess, simulateMiss } from '../services/devApi';
-import { Flame, Shield, User, Trophy, LogOut, Wrench, RefreshCw, Sparkles } from 'lucide-react';
+import { soundManager } from '../utils/soundManager';
+import { Flame, Shield, Trophy, LogOut, Wrench, RefreshCw, Sparkles, Bell, Volume2, VolumeX } from 'lucide-react';
 
 export const MainWorldPage = () => {
   const navigate = useNavigate();
@@ -17,9 +20,11 @@ export const MainWorldPage = () => {
   const { buildings, members, season, refreshWorld } = useWorld();
   const [selectedMember, setSelectedMember] = useState(null);
   const [showDevPanel, setShowDevPanel] = useState(false);
-  const [activeSequence, setActiveSequence] = useState(null); // 'meteor' or 'success'
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [activeSequence, setActiveSequence] = useState(null);
+  const [isAudioMuted, setIsAudioMuted] = useState(soundManager.isMuted());
 
-  // Map 10 buildings to organic non-grid coordinates across viewport
+  // Organic Non-Grid Positions
   const ORGANIC_POSITIONS = [
     { top: '22%', left: '15%' },
     { top: '18%', left: '38%' },
@@ -33,11 +38,31 @@ export const MainWorldPage = () => {
     { top: '70%', left: '68%' }
   ];
 
-  const aliveCount = buildings.filter((b) => !b.destroyed && b.health > 0).length;
-  const dangerCount = buildings.filter((b) => b.health > 0 && b.health <= 40).length;
-  const maxStreak = Math.max(...members.map((m) => m.user?.currentStreak || 0), 0);
+  // Periodic polling strategy (every 45 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshWorld();
+    }, 45000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const handleBuildingClick = (building) => {
+  const handleToggleSound = () => {
+    const muted = soundManager.toggleMute();
+    setIsAudioMuted(muted);
+  };
+
+  const handleBuildingClick = (building, index) => {
+    const pos = ORGANIC_POSITIONS[index] || { top: '50%', left: '50%' };
+    
+    // GSAP Camera Zoom Transition towards building
+    gsap.to('#world-camera', {
+      scale: 1.25,
+      x: (50 - parseFloat(pos.left)) * 6,
+      y: (50 - parseFloat(pos.top)) * 6,
+      duration: 0.8,
+      ease: 'power2.out'
+    });
+
     const member = members.find((m) => m.building?.number === building.buildingNumber) || {
       building: {
         number: building.buildingNumber,
@@ -55,11 +80,24 @@ export const MainWorldPage = () => {
     setSelectedMember(member);
   };
 
+  const handleCloseMemberCard = () => {
+    setSelectedMember(null);
+    // Reset GSAP Camera Zoom
+    gsap.to('#world-camera', {
+      scale: 1,
+      x: 0,
+      y: 0,
+      duration: 0.6,
+      ease: 'power2.out'
+    });
+  };
+
   const handleSimulateSuccess = async () => {
     if (!user?._id) return;
     try {
       await simulateSuccess(user._id);
       await refreshWorld();
+      soundManager.playSuccess();
       setActiveSequence('success');
     } catch (err) {
       console.error(err);
@@ -71,17 +109,22 @@ export const MainWorldPage = () => {
     try {
       await simulateMiss(user._id);
       await refreshWorld();
+      soundManager.playMeteorImpact();
       setActiveSequence('meteor');
     } catch (err) {
       console.error(err);
     }
   };
 
+  const aliveCount = buildings.filter((b) => !b.destroyed && b.health > 0).length;
+  const dangerCount = buildings.filter((b) => b.health > 0 && b.health <= 40).length;
+  const maxStreak = Math.max(...members.map((m) => m.user?.currentStreak || 0), 0);
+
   return (
     <WorldBackground season={season}>
       <div className="relative min-h-screen w-full select-none overflow-hidden flex flex-col justify-between">
         {/* Top Minimal Navigation Bar */}
-        <div className="relative z-20 p-6 flex items-center justify-between pointer-events-auto">
+        <div className="relative z-30 p-6 flex items-center justify-between pointer-events-auto">
           {/* Top Left Title */}
           <div className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-amber-400" />
@@ -90,7 +133,7 @@ export const MainWorldPage = () => {
             </span>
           </div>
 
-          {/* Top Right User Controls */}
+          {/* Top Right User & System Controls */}
           <div className="flex items-center gap-3">
             {user && (
               <div
@@ -108,6 +151,25 @@ export const MainWorldPage = () => {
                 </span>
               </div>
             )}
+
+            {/* Sound Mute/Unmute Button */}
+            <button
+              onClick={handleToggleSound}
+              className="p-2 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 transition"
+              title={isAudioMuted ? 'Unmute Audio' : 'Mute Audio'}
+            >
+              {isAudioMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+            </button>
+
+            {/* Notification Bell */}
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 transition relative"
+              title="Realm Alerts"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping" />
+            </button>
 
             <button
               onClick={() => navigate('/challenge')}
@@ -135,8 +197,8 @@ export const MainWorldPage = () => {
           </div>
         </div>
 
-        {/* Main Organic Fantasy World Scene with 10 Buildings */}
-        <div className="relative flex-1 w-full max-w-7xl mx-auto my-auto min-h-[500px]">
+        {/* Main World Camera Viewport with GSAP Transform System */}
+        <div id="world-camera" className="relative flex-1 w-full max-w-7xl mx-auto my-auto min-h-[500px]">
           {buildings.map((b, index) => {
             const pos = ORGANIC_POSITIONS[index] || { top: '50%', left: '50%' };
             const memberObj = members.find((m) => m.building?.number === b.buildingNumber);
@@ -153,7 +215,7 @@ export const MainWorldPage = () => {
                   owner={ownerObj}
                   health={b.health}
                   destroyed={b.destroyed}
-                  onClick={() => handleBuildingClick(b)}
+                  onClick={() => handleBuildingClick(b, index)}
                 />
               </div>
             );
@@ -161,7 +223,7 @@ export const MainWorldPage = () => {
         </div>
 
         {/* Bottom Status HUD Controls */}
-        <div className="relative z-20 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 pointer-events-auto">
+        <div className="relative z-30 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 pointer-events-auto">
           {/* Bottom Left Realm Summary */}
           <div className="px-4 py-2 rounded-xl bg-slate-900/85 border border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-3">
             <span>10 BUILDINGS</span>
@@ -190,7 +252,10 @@ export const MainWorldPage = () => {
           </div>
         </div>
 
-        {/* Dev Simulation Control Floating Drawer */}
+        {/* Notification Drawer */}
+        <NotificationDrawer isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+
+        {/* Dev Simulation Control Drawer */}
         {showDevPanel && (
           <div className="fixed top-20 right-6 z-40 p-4 ornate-border rounded-xl bg-slate-900/95 border border-amber-500/40 shadow-2xl text-xs space-y-3 w-64">
             <div className="font-bold text-amber-300 uppercase tracking-widest flex items-center justify-between">
@@ -225,11 +290,11 @@ export const MainWorldPage = () => {
         {/* Member Detail Story Card Modal */}
         <AnimatePresence>
           {selectedMember && (
-            <MemberCard member={selectedMember} onClose={() => setSelectedMember(null)} />
+            <MemberCard member={selectedMember} onClose={handleCloseMemberCard} />
           )}
         </AnimatePresence>
 
-        {/* Dramatic Animation Sequences */}
+        {/* Cinematic Animations */}
         {activeSequence === 'meteor' && (
           <MeteorSequence
             memberName={user?.githubUsername || 'Warrior'}
