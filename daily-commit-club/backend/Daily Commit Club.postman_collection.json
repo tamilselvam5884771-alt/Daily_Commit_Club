@@ -1,0 +1,318 @@
+{
+  "info": {
+    "_postman_id": "daily-commit-club-collection-v1",
+    "name": "Daily Commit Club",
+    "description": "Postman API Collection for Daily Commit Club - Backend Foundation & Monitoring Pipeline",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "HEALTH",
+      "item": [
+        {
+          "name": "Get Health Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AUTH",
+      "item": [
+        {
+          "name": "GitHub OAuth Redirect",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/github",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "github"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "BUILDINGS",
+      "item": [
+        {
+          "name": "List All 10 Buildings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings"]
+            }
+          }
+        },
+        {
+          "name": "Get Building by Number or ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings", "1"]
+            }
+          }
+        },
+        {
+          "name": "Claim Building",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings/1/claim",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings", "1", "claim"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ACTIVITY",
+      "item": [
+        {
+          "name": "Get Today's Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/me/today",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "me", "today"]
+            }
+          }
+        },
+        {
+          "name": "Get Activity History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CHALLENGE",
+      "item": [
+        {
+          "name": "Get Challenge Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/challenge",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "challenge"]
+            }
+          }
+        },
+        {
+          "name": "Get Global Challenge Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/challenge/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "challenge", "status"]
+            }
+          }
+        },
+        {
+          "name": "Trigger Daily Check for All Users",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/challenge/check-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "challenge", "check-all"]
+            }
+          }
+        },
+        {
+          "name": "Trigger Check for Single User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/challenge/check-user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "challenge", "check-user", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "DEVELOPMENT",
+      "item": [
+        {
+          "name": "Simulate Success Commit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"commits\": 3,\n  \"repo\": \"sample/project-repo\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/dev/simulate-success/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dev", "simulate-success", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Simulate Missed Day",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"damage\": 40,\n  \"penalty\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/dev/simulate-miss/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dev", "simulate-miss", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Simulate GitHub API Error",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dev/simulate-github-error/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dev", "simulate-github-error", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Test Email Notification Dispatch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SUCCESS\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/test/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "test", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
