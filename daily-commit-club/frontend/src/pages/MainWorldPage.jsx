@@ -1,0 +1,251 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { WorldBackground } from '../components/WorldBackground';
+import { Building } from '../components/Building';
+import { MemberCard } from '../components/MemberCard';
+import { MeteorSequence } from '../components/MeteorSequence';
+import { SuccessSequence } from '../components/SuccessSequence';
+import { useWorld } from '../context/WorldContext';
+import { useAuth } from '../context/AuthContext';
+import { simulateSuccess, simulateMiss } from '../services/devApi';
+import { Flame, Shield, User, Trophy, LogOut, Wrench, RefreshCw, Sparkles } from 'lucide-react';
+
+export const MainWorldPage = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { buildings, members, season, refreshWorld } = useWorld();
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [showDevPanel, setShowDevPanel] = useState(false);
+  const [activeSequence, setActiveSequence] = useState(null); // 'meteor' or 'success'
+
+  // Map 10 buildings to organic non-grid coordinates across viewport
+  const ORGANIC_POSITIONS = [
+    { top: '22%', left: '15%' },
+    { top: '18%', left: '38%' },
+    { top: '25%', left: '62%' },
+    { top: '20%', left: '82%' },
+    { top: '48%', left: '12%' },
+    { top: '45%', left: '35%' },
+    { top: '50%', left: '60%' },
+    { top: '46%', left: '84%' },
+    { top: '72%', left: '25%' },
+    { top: '70%', left: '68%' }
+  ];
+
+  const aliveCount = buildings.filter((b) => !b.destroyed && b.health > 0).length;
+  const dangerCount = buildings.filter((b) => b.health > 0 && b.health <= 40).length;
+  const maxStreak = Math.max(...members.map((m) => m.user?.currentStreak || 0), 0);
+
+  const handleBuildingClick = (building) => {
+    const member = members.find((m) => m.building?.number === building.buildingNumber) || {
+      building: {
+        number: building.buildingNumber,
+        name: building.name,
+        health: building.health,
+        destroyed: building.destroyed
+      },
+      user: building.ownerId || {
+        githubUsername: 'Unclaimed',
+        name: 'Unclaimed Structure',
+        currentStreak: 0,
+        coffeeDebt: 0
+      }
+    };
+    setSelectedMember(member);
+  };
+
+  const handleSimulateSuccess = async () => {
+    if (!user?._id) return;
+    try {
+      await simulateSuccess(user._id);
+      await refreshWorld();
+      setActiveSequence('success');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSimulateMiss = async () => {
+    if (!user?._id) return;
+    try {
+      await simulateMiss(user._id);
+      await refreshWorld();
+      setActiveSequence('meteor');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <WorldBackground season={season}>
+      <div className="relative min-h-screen w-full select-none overflow-hidden flex flex-col justify-between">
+        {/* Top Minimal Navigation Bar */}
+        <div className="relative z-20 p-6 flex items-center justify-between pointer-events-auto">
+          {/* Top Left Title */}
+          <div className="flex items-center gap-2">
+            <Shield className="w-6 h-6 text-amber-400" />
+            <span className="text-xl font-black font-cinzel text-amber-200 tracking-wider">
+              DAILY COMMIT CLUB
+            </span>
+          </div>
+
+          {/* Top Right User Controls */}
+          <div className="flex items-center gap-3">
+            {user && (
+              <div
+                onClick={() => navigate('/profile')}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-amber-500/40 cursor-pointer hover:border-amber-400 transition"
+              >
+                <img
+                  src={user.githubAvatar || user.profileImage || `https://github.com/${user.githubUsername}.png`}
+                  alt={user.githubUsername}
+                  className="w-6 h-6 rounded-full border border-amber-400"
+                />
+                <span className="text-xs font-bold text-amber-200">@{user.githubUsername}</span>
+                <span className="text-xs text-amber-400 font-extrabold flex items-center gap-0.5 ml-1">
+                  <Flame className="w-3.5 h-3.5" /> {user.currentStreak}d
+                </span>
+              </div>
+            )}
+
+            <button
+              onClick={() => navigate('/challenge')}
+              className="p-2 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 transition"
+              title="Challenge Overview"
+            >
+              <Trophy className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setShowDevPanel(!showDevPanel)}
+              className="p-2 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-amber-400 text-slate-300 hover:text-amber-300 transition"
+              title="Dev Simulation Panel"
+            >
+              <Wrench className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={logout}
+              className="p-2 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-rose-400 text-slate-300 hover:text-rose-400 transition"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Main Organic Fantasy World Scene with 10 Buildings */}
+        <div className="relative flex-1 w-full max-w-7xl mx-auto my-auto min-h-[500px]">
+          {buildings.map((b, index) => {
+            const pos = ORGANIC_POSITIONS[index] || { top: '50%', left: '50%' };
+            const memberObj = members.find((m) => m.building?.number === b.buildingNumber);
+            const ownerObj = memberObj?.user || b.ownerId;
+
+            return (
+              <div
+                key={b.buildingNumber}
+                style={{ top: pos.top, left: pos.left }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-700"
+              >
+                <Building
+                  building={b}
+                  owner={ownerObj}
+                  health={b.health}
+                  destroyed={b.destroyed}
+                  onClick={() => handleBuildingClick(b)}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Bottom Status HUD Controls */}
+        <div className="relative z-20 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 pointer-events-auto">
+          {/* Bottom Left Realm Summary */}
+          <div className="px-4 py-2 rounded-xl bg-slate-900/85 border border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-3">
+            <span>10 BUILDINGS</span>
+            <span>•</span>
+            <span className="text-emerald-400">{aliveCount} ALIVE</span>
+            {dangerCount > 0 && (
+              <>
+                <span>•</span>
+                <span className="text-rose-400 animate-pulse">{dangerCount} IN DANGER</span>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Center Group Streak HUD */}
+          <div className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-slate-900/90 to-amber-950/80 border border-amber-500/40 text-center shadow-xl">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">REALM STREAK LEVEL</div>
+            <div className="text-lg font-black text-amber-300 font-cinzel flex items-center justify-center gap-1.5">
+              <Flame className="w-5 h-5 text-amber-500 animate-bounce" /> GROUP STREAK {maxStreak} DAYS
+            </div>
+          </div>
+
+          {/* Bottom Right Season Indicator */}
+          <div className="px-4 py-2 rounded-xl bg-slate-900/85 border border-slate-800 text-xs font-semibold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>SEASON: {season.toUpperCase()}</span>
+          </div>
+        </div>
+
+        {/* Dev Simulation Control Floating Drawer */}
+        {showDevPanel && (
+          <div className="fixed top-20 right-6 z-40 p-4 ornate-border rounded-xl bg-slate-900/95 border border-amber-500/40 shadow-2xl text-xs space-y-3 w-64">
+            <div className="font-bold text-amber-300 uppercase tracking-widest flex items-center justify-between">
+              <span>Dev Simulation Panel</span>
+              <button onClick={() => setShowDevPanel(false)}>✕</button>
+            </div>
+            <p className="text-[11px] text-slate-400">Trigger live business logic & cinematic sequences without waiting for midnight.</p>
+
+            <button
+              onClick={handleSimulateSuccess}
+              className="w-full py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-300 font-bold transition flex items-center justify-center gap-1"
+            >
+              <Flame className="w-3.5 h-3.5" /> SIMULATE SUCCESS
+            </button>
+
+            <button
+              onClick={handleSimulateMiss}
+              className="w-full py-2 rounded-lg bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-300 font-bold transition flex items-center justify-center gap-1"
+            >
+              <span>☄️ SIMULATE MISSED METEOR</span>
+            </button>
+
+            <button
+              onClick={refreshWorld}
+              className="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition flex items-center justify-center gap-1"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh World State
+            </button>
+          </div>
+        )}
+
+        {/* Member Detail Story Card Modal */}
+        <AnimatePresence>
+          {selectedMember && (
+            <MemberCard member={selectedMember} onClose={() => setSelectedMember(null)} />
+          )}
+        </AnimatePresence>
+
+        {/* Dramatic Animation Sequences */}
+        {activeSequence === 'meteor' && (
+          <MeteorSequence
+            memberName={user?.githubUsername || 'Warrior'}
+            buildingName={user?.buildingId?.name || 'Your Building'}
+            onClose={() => setActiveSequence(null)}
+          />
+        )}
+
+        {activeSequence === 'success' && (
+          <SuccessSequence
+            memberName={user?.githubUsername || 'Warrior'}
+            streak={user?.currentStreak || 1}
+            onClose={() => setActiveSequence(null)}
+          />
+        )}
+      </div>
+    </WorldBackground>
+  );
+};
