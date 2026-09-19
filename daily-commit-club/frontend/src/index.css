@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+  background-color: #070a12;
+  color: #f8fafc;
+}
+
+/* Custom Typography Classes */
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Monolithic Color Tokens for 10 Buildings */
+.theme-amber {
+  --color-primary: #f59e0b;
+  --color-dark: #451a03;
+  --color-light: #fef3c7;
+  --color-glow: rgba(245, 158, 11, 0.4);
+}
+
+.theme-emerald {
+  --color-primary: #10b981;
+  --color-dark: #022c22;
+  --color-light: #d1fae5;
+  --color-glow: rgba(16, 185, 129, 0.4);
+}
+
+.theme-burgundy {
+  --color-primary: #e11d48;
+  --color-dark: #4c0519;
+  --color-light: #ffe4e6;
+  --color-glow: rgba(225, 29, 72, 0.4);
+}
+
+.theme-sapphire {
+  --color-primary: #3b82f6;
+  --color-dark: #172554;
+  --color-light: #dbeafe;
+  --color-glow: rgba(59, 130, 246, 0.4);
+}
+
+.theme-violet {
+  --color-primary: #8b5cf6;
+  --color-dark: #2e1065;
+  --color-light: #ede9fe;
+  --color-glow: rgba(139, 92, 246, 0.4);
+}
+
+.theme-copper {
+  --color-primary: #f97316;
+  --color-dark: #431407;
+  --color-light: #ffedd5;
+  --color-glow: rgba(249, 115, 22, 0.4);
+}
+
+.theme-teal {
+  --color-primary: #14b8a6;
+  --color-dark: #042f2e;
+  --color-light: #ccfbf1;
+  --color-glow: rgba(20, 184, 166, 0.4);
+}
+
+.theme-crimson {
+  --color-primary: #ef4444;
+  --color-dark: #450a0a;
+  --color-light: #fee2e2;
+  --color-glow: rgba(239, 68, 68, 0.4);
+}
+
+.theme-forest {
+  --color-primary: #22c55e;
+  --color-dark: #052e16;
+  --color-light: #dcfce7;
+  --color-glow: rgba(34, 197, 94, 0.4);
+}
+
+.theme-indigo {
+  --color-primary: #6366f1;
+  --color-dark: #1e1b4b;
+  --color-light: #e0e7ff;
+  --color-glow: rgba(99, 102, 241, 0.4);
+}
+
+/* Ornate Storybook Border Framing */
+.ornate-border {
+  position: relative;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7);
+}
+
+.ornate-border::before,
+.ornate-border::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d4af37;
+  pointer-events: none;
+}
+
+.ornate-border::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.ornate-border::after {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Ambient Keyframe Animations */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fogDrift {
+  0% { transform: translateX(-10%); }
+  50% { transform: translateX(10%); }
+  100% { transform: translateX(-10%); }
+}
+
+@keyframes starPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes smokeRise {
+  0% { opacity: 0.6; transform: translateY(0) scale(0.8); }
+  100% { opacity: 0; transform: translateY(-30px) scale(1.4); }
+}
+
+.animate-float {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-fog {
+  animation: fogDrift 30s ease-in-out infinite;
+}
+
+.animate-star {
+  animation: starPulse 3s ease-in-out infinite;
+}
+
+.animate-smoke {
+  animation: smokeRise 4s linear infinite;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
