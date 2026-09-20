@@ -2,14 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WorldProvider } from './context/WorldContext';
+import { CustomCursor } from './components/CustomCursor';
 
 import { LandingPage } from './pages/LandingPage';
-import { NameInputPage } from './pages/NameInputPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './pages/LoginPage';
-import { BuildingSelectionPage } from './pages/BuildingSelectionPage';
-import { ConnectGithubPage } from './pages/ConnectGithubPage';
-import { ProfileSetupPage } from './pages/ProfileSetupPage';
-import { WorldEntrancePage } from './pages/WorldEntrancePage';
 import { MainWorldPage } from './pages/MainWorldPage';
 import { ChallengePage } from './pages/ChallengePage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -27,14 +24,14 @@ export function App() {
     <AuthProvider>
       <WorldProvider>
         <Router>
+          {/* Awwwards Custom Magnetic Cursor */}
+          <CustomCursor />
+
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/onboarding/name" element={<NameInputPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/onboarding/name" element={<Navigate to="/register" replace />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/choose-home" element={<BuildingSelectionPage />} />
-            <Route path="/connect-github" element={<ConnectGithubPage />} />
-            <Route path="/setup-profile" element={<ProfileSetupPage />} />
-            <Route path="/enter-world" element={<WorldEntrancePage />} />
             <Route path="/world" element={<MainWorldPage />} />
             <Route path="/challenge" element={<ChallengePage />} />
             <Route
