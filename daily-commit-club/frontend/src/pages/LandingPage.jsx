@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { WorldBackground } from '../components/WorldBackground';
-import { Shield, Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ export const LandingPage = () => {
             "Your GitHub activity keeps your world alive."
           </motion.p>
 
-          {/* Primary CTA Button */}
+          {/* Primary CTA Button -> Onboarding Step 1 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -70,8 +70,8 @@ export const LandingPage = () => {
             className="mt-8"
           >
             <button
-              onClick={() => navigate('/login')}
-              className="group relative px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 text-slate-950 font-bold text-base uppercase tracking-widest shadow-[0_0_40px_rgba(245,158,11,0.5)] hover:shadow-[0_0_60px_rgba(245,158,11,0.8)] transition duration-300 flex items-center gap-3"
+              onClick={() => navigate('/onboarding/name')}
+              className="group relative px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 text-slate-950 font-black text-base uppercase tracking-widest shadow-[0_0_40px_rgba(245,158,11,0.5)] hover:shadow-[0_0_60px_rgba(245,158,11,0.8)] transition duration-300 flex items-center gap-3"
             >
               <span>ENTER THE CLUB</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -86,7 +86,7 @@ export const LandingPage = () => {
           transition={{ duration: 0.8, delay: 1.2 }}
           className="pb-6 flex items-center gap-6 text-xs font-semibold text-slate-400 uppercase tracking-widest border-t border-slate-800/60 pt-4"
         >
-          <span>10 BUILDINGS</span>
+          <span>10 HOUSES</span>
           <span>•</span>
           <span>10 CODERS</span>
           <span>•</span>
