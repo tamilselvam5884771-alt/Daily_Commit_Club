@@ -20,7 +20,7 @@ export const getMyProfile = async (req, res, next) => {
  */
 export const updateMyProfile = async (req, res, next) => {
   try {
-    const allowedUpdates = ['name', 'email', 'profileImage', 'animatedAvatar'];
+    const allowedUpdates = ['displayName', 'name', 'email', 'profileImage', 'animatedAvatar'];
     const updates = {};
 
     Object.keys(req.body).forEach((key) => {
