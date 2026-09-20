@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import mongoose from 'mongoose';
 
 import authRoutes from './routes/authRoutes.js';
+import githubRoutes from './routes/githubRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import buildingRoutes from './routes/buildingRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
@@ -75,6 +76,7 @@ app.get('/api/health', (req, res) => {
 
 // API Routes Mount
 app.use('/api/auth', authRoutes);
+app.use('/api/github', githubRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/buildings', buildingRoutes);
 app.use('/api/activity', activityRoutes);
