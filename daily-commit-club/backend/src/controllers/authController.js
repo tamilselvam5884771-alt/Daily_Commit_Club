@@ -1,123 +1,148 @@
 import jwt from 'jsonwebtoken';
-import { GITHUB_CONFIG } from '../config/github.js';
 import { User } from '../models/User.js';
-import { getGitHubUser, getGitHubEmail } from '../services/githubService.js';
+import { Building } from '../models/Building.js';
+import { extractGitHubUsernameFromUrl } from './githubController.js';
 import { logger } from '../utils/logger.js';
 
-/**
- * Initiates GitHub OAuth login flow by redirecting to GitHub Authorization
- */
-export const githubLogin = (req, res) => {
-  const params = new URLSearchParams({
-    client_id: GITHUB_CONFIG.CLIENT_ID || 'mock_client_id',
-    redirect_uri: GITHUB_CONFIG.CALLBACK_URL,
-    scope: GITHUB_CONFIG.SCOPES.join(' ')
-  });
-
-  const redirectUrl = `${GITHUB_CONFIG.AUTHORIZE_URL}?${params.toString()}`;
-  logger.info('AUTH', `Redirecting user to GitHub OAuth: ${redirectUrl}`);
-  return res.redirect(redirectUrl);
-};
+const JWT_SECRET = process.env.JWT_SECRET || 'daily_commit_club_super_secret_jwt_key_2026';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 /**
- * GitHub OAuth Callback
- * Exchanges code for access token, gets profile, upserts user, issues JWT token
+ * Register User with Native Email/Password, GitHub Verification, and House Claiming
  */
-export const githubCallback = async (req, res, next) => {
+export const register = async (req, res, next) => {
   try {
-    const { code } = req.query;
+    const { name, email, password, githubUrl, buildingId, profileImage } = req.body;
 
-    if (!code) {
-      // If code is missing (e.g. in dev testing), allow mock authorization code parameter
-      if (process.env.ALLOW_DEV_ENDPOINTS === 'true' && req.query.mockUsername) {
-        return handleMockLogin(req.query.mockUsername, res);
+    // 1. Basic Field Validations
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_NAME', message: 'Please enter your name.' }
+      });
+    }
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_EMAIL', message: 'Please enter a valid email address.' }
+      });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'WEAK_PASSWORD', message: 'Password must be at least 6 characters long.' }
+      });
+    }
+
+    // 2. Validate & Normalize GitHub Profile URL
+    const githubUsername = extractGitHubUsernameFromUrl(githubUrl);
+    if (!githubUsername) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_GITHUB_URL',
+          message: 'Please enter a valid full GitHub profile URL (e.g. https://github.com/yourusername).'
+        }
+      });
+    }
+
+    const normalizedGitHubUrl = `https://github.com/${githubUsername}`;
+
+    // 3. Check for existing Email or GitHub username in database
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingEmailUser = await User.findOne({ email: normalizedEmail });
+    if (existingEmailUser) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'EMAIL_IN_USE', message: 'An account with that email address already exists.' }
+      });
+    }
+
+    const existingGitHubUser = await User.findOne({ githubUsername });
+    if (existingGitHubUser) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'GITHUB_IN_USE', message: `GitHub profile @${githubUsername} is already registered.` }
+      });
+    }
+
+    // 4. Validate & Claim House / Building Selection
+    let claimedBuilding = null;
+    if (buildingId) {
+      claimedBuilding = await Building.findById(buildingId);
+      if (!claimedBuilding) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_HOUSE', message: 'Selected house does not exist.' }
+        });
       }
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Authorization code is missing from GitHub callback', code: 'MISSING_CODE' }
-      });
-    }
 
-    // Exchange authorization code for GitHub access token
-    const tokenResponse = await fetch(GITHUB_CONFIG.TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify({
-        client_id: GITHUB_CONFIG.CLIENT_ID,
-        client_secret: GITHUB_CONFIG.CLIENT_SECRET,
-        code,
-        redirect_uri: GITHUB_CONFIG.CALLBACK_URL
-      })
-    });
-
-    const tokenData = await tokenResponse.json();
-
-    if (tokenData.error || !tokenData.access_token) {
-      logger.error('AUTH', `GitHub token exchange failed: ${tokenData.error_description || tokenData.error}`);
-      return res.status(400).json({
-        success: false,
-        error: { message: tokenData.error_description || 'Failed to exchange authorization code with GitHub', code: 'OAUTH_FAILED' }
-      });
-    }
-
-    const accessToken = tokenData.access_token;
-
-    // Retrieve GitHub Profile and Email via githubService
-    const ghUser = await getGitHubUser(accessToken);
-    const primaryEmail = (await getGitHubEmail(accessToken)) || ghUser.email || '';
-
-    // Upsert User in MongoDB
-    let user = await User.findOne({ githubId: ghUser.id.toString() });
-
-    if (!user) {
-      user = new User({
-        githubId: ghUser.id.toString(),
-        githubUsername: ghUser.login,
-        name: ghUser.name || ghUser.login,
-        email: primaryEmail,
-        githubAvatar: ghUser.avatar_url,
-        profileImage: ghUser.avatar_url,
-        role: 'member'
-      });
+      if (claimedBuilding.ownerId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'HOUSE_ALREADY_CLAIMED', message: 'That house has already been claimed by another member.' }
+        });
+      }
     } else {
-      user.githubUsername = ghUser.login;
-      user.name = ghUser.name || user.name;
-      if (primaryEmail) user.email = primaryEmail;
-      user.githubAvatar = ghUser.avatar_url;
+      // Find first available house if buildingId not passed
+      claimedBuilding = await Building.findOne({ ownerId: null }).sort({ buildingNumber: 1 });
+      if (!claimedBuilding) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'NO_HOUSES_AVAILABLE', message: 'All 10 houses in the realm are currently occupied!' }
+        });
+      }
     }
+
+    // Fetch GitHub avatar if not provided
+    const avatarUrl = profileImage || `https://github.com/${githubUsername}.png`;
+
+    // 5. Create User
+    const user = new User({
+      name: name.trim(),
+      displayName: name.trim(),
+      email: normalizedEmail,
+      password: password,
+      githubProfileUrl: normalizedGitHubUrl,
+      githubUsername: githubUsername,
+      githubAvatar: avatarUrl,
+      profileImage: avatarUrl,
+      buildingId: claimedBuilding._id,
+      role: 'member'
+    });
 
     await user.save();
-    logger.info('AUTH', `GitHub authentication successful for @${user.githubUsername} (ID: ${user._id})`);
 
-    // Create JWT Token
-    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'daily_commit_club_super_secret_jwt_key_2026', {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-    });
+    // 6. Assign building to user atomically
+    claimedBuilding.ownerId = user._id;
+    await claimedBuilding.save();
 
-    // Set cookie for browser sessions
-    res.cookie('token', jwtToken, {
+    logger.info('AUTH', `User registered successfully: ${user.name} (@${user.githubUsername}) - House #${claimedBuilding.buildingNumber}`);
+
+    // 7. Issue JWT Token & Set Cookie
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+    res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
-      data: {
-        message: 'GitHub authentication successful',
-        token: jwtToken,
-        user: {
-          id: user._id,
-          githubUsername: user.githubUsername,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          currentStreak: user.currentStreak,
-          buildingId: user.buildingId
-        }
+      token,
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        githubUsername: user.githubUsername,
+        githubProfileUrl: user.githubProfileUrl,
+        profileImage: user.profileImage,
+        buildingId: claimedBuilding,
+        currentStreak: user.currentStreak
       }
     });
   } catch (error) {
@@ -126,7 +151,71 @@ export const githubCallback = async (req, res, next) => {
 };
 
 /**
- * Gets currently logged in user profile
+ * Login User with Email and Password
+ */
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_CREDENTIALS', message: 'Please provide both email and password.' }
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Select password field for verification
+    const user = await User.findOne({ email: normalizedEmail }).select('+password').populate('buildingId');
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' }
+      });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' }
+      });
+    }
+
+    logger.info('AUTH', `User logged in: ${user.email} (@${user.githubUsername})`);
+
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        githubUsername: user.githubUsername,
+        githubProfileUrl: user.githubProfileUrl,
+        profileImage: user.profileImage,
+        buildingId: user.buildingId,
+        currentStreak: user.currentStreak
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get Currently Logged In User Profile
  */
 export const getMe = async (req, res, next) => {
   try {
@@ -141,7 +230,7 @@ export const getMe = async (req, res, next) => {
 };
 
 /**
- * Logout
+ * Logout Endpoint
  */
 export const logout = (req, res) => {
   res.clearCookie('token');
@@ -152,30 +241,25 @@ export const logout = (req, res) => {
 };
 
 /**
- * Dev Helper for mocking login without live GitHub Client Secret
+ * Forgot Password Endpoint
  */
-const handleMockLogin = async (mockUsername, res) => {
-  let user = await User.findOne({ githubUsername: mockUsername });
-  if (!user) {
-    user = await User.create({
-      githubId: `mock_${Date.now()}`,
-      githubUsername: mockUsername,
-      name: `${mockUsername} (Mock)`,
-      email: `${mockUsername}@example.com`,
-      githubAvatar: `https://github.com/${mockUsername}.png`
-    });
-  }
-
-  const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'daily_commit_club_super_secret_jwt_key_2026', {
-    expiresIn: '7d'
-  });
-
-  return res.status(200).json({
-    success: true,
-    data: {
-      message: 'Mock GitHub authentication successful',
-      token: jwtToken,
-      user
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_EMAIL', message: 'Please enter your registered email address.' }
+      });
     }
-  });
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    // Always return success to prevent email enumeration
+    return res.status(200).json({
+      success: true,
+      message: 'If an account with that email exists, password reset instructions have been sent.'
+    });
+  } catch (error) {
+    next(error);
+  }
 };
