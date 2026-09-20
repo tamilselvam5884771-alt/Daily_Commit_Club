@@ -8,6 +8,35 @@ export const getMe = async () => {
   }
 };
 
+export const registerUser = async (data) => {
+  const res = await fetchApi('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+  if (res && res.token) {
+    localStorage.setItem('dcc_token', res.token);
+  }
+  return res;
+};
+
+export const loginUser = async (email, password) => {
+  const res = await fetchApi('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password })
+  });
+  if (res && res.token) {
+    localStorage.setItem('dcc_token', res.token);
+  }
+  return res;
+};
+
+export const verifyGitHubProfileUrl = async (githubUrl) => {
+  return await fetchApi('/github/verify', {
+    method: 'POST',
+    body: JSON.stringify({ githubUrl })
+  });
+};
+
 export const logoutUser = async () => {
   try {
     await fetchApi('/auth/logout', { method: 'POST' });
@@ -18,6 +47,9 @@ export const logoutUser = async () => {
   }
 };
 
-export const getGitHubAuthUrl = () => {
-  return '/api/auth/github';
+export const forgotPasswordUser = async (email) => {
+  return await fetchApi('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  });
 };
