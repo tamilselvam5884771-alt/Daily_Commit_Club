@@ -1,12 +1,34 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
-    githubId: {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    displayName: {
+      type: String,
+      default: ''
+    },
+    email: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
       index: true
+    },
+    password: {
+      type: String,
+      required: true,
+      select: false
+    },
+    githubProfileUrl: {
+      type: String,
+      required: true,
+      trim: true
     },
     githubUsername: {
       type: String,
@@ -14,17 +36,8 @@ const userSchema = new mongoose.Schema(
       unique: true,
       index: true
     },
-    displayName: {
+    githubId: {
       type: String,
-      default: ''
-    },
-    name: {
-      type: String,
-      default: ''
-    },
-    email: {
-      type: String,
-      index: true,
       default: ''
     },
     githubAvatar: {
@@ -81,11 +94,34 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true
+    },
+    resetPasswordToken: {
+      type: String,
+      select: false
+    },
+    resetPasswordExpire: {
+      type: Date,
+      select: false
     }
   },
   {
     timestamps: true
   }
 );
+
+// Encrypt password using bcrypt before saving
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// Match user entered password to hashed password in database
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 export const User = mongoose.model('User', userSchema);
