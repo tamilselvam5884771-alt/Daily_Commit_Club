@@ -1,102 +1,204 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
 import { WorldBackground } from '../components/WorldBackground';
+import { Sparkles, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { loginUser, forgotPasswordUser } from '../services/authApi';
 import { useAuth } from '../context/AuthContext';
-import { Github, KeyRound, Sparkles } from 'lucide-react';
+import { audioService } from '../services/audioService';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { user, refreshUser } = useAuth();
-  const [devUsername, setDevUsername] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { refreshUser } = useAuth();
 
-  // Live GitHub OAuth Login redirect
-  const handleGitHubLogin = () => {
-    window.location.href = '/api/auth/github';
-  };
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // Dev Quick-Login Helper for testing without live GitHub Client Secret
-  const handleMockLogin = async (e) => {
+  // Forgot password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!devUsername.trim()) return;
+    setErrorMsg('');
+
+    if (!email || !password) {
+      setErrorMsg('Please enter both email and password.');
+      return;
+    }
 
     try {
-      setLoading(true);
-      const res = await fetch(`/api/auth/github/callback?mockUsername=${encodeURIComponent(devUsername.trim())}`);
-      const data = await res.json();
+      setIsSubmitting(true);
+      audioService.playClick();
+      const res = await loginUser(email, password);
 
-      if (data.success && data.data?.token) {
-        localStorage.setItem('dcc_token', data.data.token);
+      if (res && res.success) {
         await refreshUser();
-
-        const u = data.data.user;
-        if (!u.buildingId) navigate('/choose-home');
-        else navigate('/world');
+        audioService.playVictoryFanfare();
+        navigate('/world');
+      } else {
+        setErrorMsg(res?.error?.message || 'Invalid email or password.');
       }
     } catch (err) {
-      console.error('Dev Login error:', err);
+      setErrorMsg(err.message || 'Login failed.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    try {
+      audioService.playClick();
+      const res = await forgotPasswordUser(forgotEmail);
+      setForgotSuccess(res?.message || 'If registered, reset instructions have been sent.');
+    } catch (err) {
+      setForgotSuccess('If registered, reset instructions have been sent.');
     }
   };
 
   return (
     <WorldBackground season="spring">
-      <div className="relative min-h-screen flex items-center justify-center p-6 select-none">
-        {/* Fantasy Portal Frame */}
+      <div className="relative min-h-screen flex items-center justify-center p-4 z-20">
+        {/* Minimal Form Card Overlaying the World */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative w-full max-w-md ornate-border p-8 rounded-3xl bg-gradient-to-b from-slate-900/90 via-slate-900/85 to-slate-950/95 text-center shadow-2xl border border-amber-500/30"
+          className="relative w-full max-w-md ornate-border p-8 rounded-3xl bg-slate-900/90 border border-amber-500/40 shadow-2xl backdrop-blur-xl text-center"
         >
-          {/* Portal Icon */}
-          <div className="w-16 h-16 mx-auto rounded-full bg-slate-900 border-2 border-amber-400/80 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.4)] mb-4">
-            <Sparkles className="w-8 h-8 text-amber-300 animate-spin" />
+          {/* Header Title */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold uppercase tracking-widest mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+            <span>Realm Entrance</span>
           </div>
 
-          <h2 className="text-3xl font-black font-cinzel text-amber-200 tracking-wider">
-            ENTER THE CLUB
+          <h2 className="text-3xl font-black font-cinzel text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500">
+            LOG IN TO YOUR HOUSE
           </h2>
-          <p className="mt-2 text-xs text-slate-300 font-outfit leading-relaxed">
-            Authenticate your GitHub identity to bind your commit activity to the realm.
+          <p className="text-xs text-slate-300 mt-1 font-outfit">
+            Enter your credentials to manage your structure.
           </p>
 
-          {/* Live GitHub OAuth Button */}
-          <button
-            onClick={handleGitHubLogin}
-            className="mt-6 w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border border-slate-600 hover:border-amber-400 text-slate-100 font-bold text-sm tracking-wide shadow-xl hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] transition flex items-center justify-center gap-3"
-          >
-            <Github className="w-5 h-5 text-amber-300" />
-            <span>CONTINUE WITH GITHUB</span>
-          </button>
+          <form onSubmit={handleLogin} className="mt-6 space-y-4 text-left">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition text-sm"
+                />
+              </div>
+            </div>
 
-          {/* Dev Mode Quick Authentication Divider */}
-          <div className="my-6 flex items-center gap-3 text-xs text-slate-500 uppercase tracking-widest">
-            <div className="h-px bg-slate-800 flex-1" />
-            <span>Dev Testing Portal</span>
-            <div className="h-px bg-slate-800 flex-1" />
-          </div>
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="text-[11px] text-amber-400/80 hover:text-amber-300 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
+                <input
+                  type="password"
+                  placeholder="Your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition text-sm"
+                />
+              </div>
+            </div>
 
-          <form onSubmit={handleMockLogin} className="space-y-3">
-            <input
-              type="text"
-              placeholder="Enter GitHub Username (e.g. torvalds)"
-              value={devUsername}
-              onChange={(e) => setDevUsername(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition"
-            />
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/50 text-xs text-rose-300 font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/40 text-amber-300 font-semibold text-xs tracking-wider transition flex items-center justify-center gap-2"
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 disabled:opacity-50 text-slate-950 font-black text-xs uppercase tracking-widest shadow-[0_0_30px_rgba(245,158,11,0.5)] transition duration-300 flex items-center justify-center gap-2 hover:brightness-110"
             >
-              <KeyRound className="w-4 h-4" />
-              <span>{loading ? 'Entering Realm...' : 'ENTER AS DEV USER'}</span>
+              <span>{isSubmitting ? 'ENTERING...' : 'ENTER THE CLUB'}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+
+          {/* Secondary Action */}
+          <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
+            <span className="text-xs text-slate-400">Don't have a house yet? </span>
+            <button
+              onClick={() => {
+                audioService.playClick();
+                navigate('/register');
+              }}
+              className="text-xs font-bold text-amber-300 hover:underline uppercase tracking-wider ml-1"
+            >
+              CREATE ACCOUNT
+            </button>
+          </div>
         </motion.div>
+
+        {/* Forgot Password Modal */}
+        {showForgotModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-full max-w-sm p-6 rounded-2xl bg-slate-900 border border-amber-500/40 text-center relative"
+            >
+              <h3 className="text-lg font-bold font-cinzel text-amber-300">RESET PASSWORD</h3>
+              <p className="text-xs text-slate-300 mt-1">Enter your registered email address.</p>
+
+              {forgotSuccess ? (
+                <div className="my-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-300">
+                  {forgotSuccess}
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="mt-4 space-y-3">
+                  <input
+                    type="email"
+                    placeholder="Enter email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs uppercase"
+                  >
+                    Send Reset Request
+                  </button>
+                </form>
+              )}
+
+              <button
+                onClick={() => setShowForgotModal(false)}
+                className="mt-3 text-xs text-slate-400 hover:text-white"
+              >
+                Close
+              </button>
+            </motion.div>
+          </div>
+        )}
       </div>
     </WorldBackground>
   );
