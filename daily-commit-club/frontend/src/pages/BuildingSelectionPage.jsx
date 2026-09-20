@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { WorldBackground } from '../components/WorldBackground';
-import { Building } from '../components/Building';
+import { Property } from '../components/Property';
 import { getAllBuildings, claimBuildingApi } from '../services/buildingApi';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Sparkles, Check, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 export const BuildingSelectionPage = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
+  const displayName = localStorage.getItem('dcc_display_name') || 'Warrior';
   const [buildings, setBuildings] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,9 +40,9 @@ export const BuildingSelectionPage = () => {
       setErrorMsg('');
       await claimBuildingApi(selected._id || selected.buildingNumber);
       await refreshUser();
-      navigate('/setup-profile');
+      navigate('/connect-github');
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to claim building. It may already be owned.');
+      setErrorMsg(err.message || 'Failed to claim house. It may already be owned.');
     } finally {
       setClaiming(false);
     }
@@ -50,20 +51,20 @@ export const BuildingSelectionPage = () => {
   return (
     <WorldBackground season="spring">
       <div className="relative min-h-screen p-6 flex flex-col items-center justify-between select-none">
-        {/* Page Header */}
+        {/* Step Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mt-4"
         >
           <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">
-            <Sparkles className="w-4 h-4 animate-spin" /> Realm Territory Selection
+            <Sparkles className="w-4 h-4 animate-spin" /> Step 2 of Onboarding
           </div>
           <h1 className="text-4xl md:text-5xl font-black font-cinzel text-amber-200 tracking-wider">
             CHOOSE YOUR HOME
           </h1>
-          <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-            Select one of the 10 realm structures to anchor your daily GitHub commit streak.
+          <p className="text-xs text-slate-300 mt-1 max-w-md mx-auto">
+            Select your personal house property in the realm, <strong className="text-amber-200">{displayName}</strong>.
           </p>
         </motion.div>
 
@@ -74,7 +75,7 @@ export const BuildingSelectionPage = () => {
           </div>
         )}
 
-        {/* 10 Buildings Interactive Grid */}
+        {/* 10 Unique House Properties Village Grid */}
         <div className="my-8 w-full max-w-6xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 justify-items-center">
           {buildings.map((b) => {
             const isOwned = !!b.ownerId;
@@ -88,9 +89,11 @@ export const BuildingSelectionPage = () => {
                   isCurrentSelected ? 'ring-2 ring-amber-400 bg-amber-950/30 scale-105' : ''
                 } ${isOwned ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
               >
-                <Building
+                <Property
                   building={b}
                   owner={b.ownerId}
+                  health={b.health}
+                  destroyed={b.destroyed}
                   isSelected={isCurrentSelected}
                 />
 
@@ -104,7 +107,7 @@ export const BuildingSelectionPage = () => {
           })}
         </div>
 
-        {/* Bottom Claim Action Bar */}
+        {/* Selection Confirmation Bar */}
         <AnimatePresence>
           {selected && (
             <motion.div
@@ -115,7 +118,7 @@ export const BuildingSelectionPage = () => {
             >
               <div>
                 <div className="text-xs text-amber-400 uppercase tracking-widest font-semibold">
-                  Selected Structure #{selected.buildingNumber}
+                  MAKE THIS YOUR HOME?
                 </div>
                 <div className="text-xl font-bold text-slate-100 font-cinzel">
                   {selected.name} ({selected.theme} Realm)
@@ -127,7 +130,7 @@ export const BuildingSelectionPage = () => {
                 disabled={claiming}
                 className="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-700 text-slate-950 font-extrabold text-xs uppercase tracking-widest hover:from-amber-400 hover:to-amber-600 transition shadow-lg flex items-center gap-2"
               >
-                <span>{claiming ? 'CLAIMING...' : 'CHOOSE THIS HOME'}</span>
+                <span>{claiming ? 'CLAIMING...' : 'CHOOSE THIS HOUSE'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </motion.div>
