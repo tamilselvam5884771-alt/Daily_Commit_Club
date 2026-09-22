@@ -4,6 +4,93 @@ import { logger } from '../utils/logger.js';
 import { getChallengeDate, getChallengeDayStart, getChallengeDayEnd } from '../utils/dateUtils.js';
 
 /**
+ * Validates and normalizes GitHub profile URL
+ */
+export const parseAndValidateGitHubUrl = (inputUrl) => {
+  if (!inputUrl || typeof inputUrl !== 'string') {
+    return { valid: false, error: 'GitHub profile URL is required' };
+  }
+
+  let raw = inputUrl.trim();
+  if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
+    raw = 'https://' + raw;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    const hostname = parsed.hostname.toLowerCase();
+
+    if (hostname !== 'github.com' && hostname !== 'www.github.com') {
+      return { valid: false, error: 'Must be a valid github.com URL' };
+    }
+
+    const pathSegments = parsed.pathname.split('/').filter(Boolean);
+
+    if (pathSegments.length !== 1) {
+      return { valid: false, error: 'URL must point directly to a user profile (e.g. https://github.com/username)' };
+    }
+
+    const username = pathSegments[0];
+    const reserved = ['about', 'pricing', 'features', 'explore', 'topics', 'trending', 'collections', 'events', 'sponsors', 'settings', 'orgs', 'login', 'signup', 'join'];
+    if (reserved.includes(username.toLowerCase()) || !/^[a-zA-Z0-9-]{1,39}$/.test(username)) {
+      return { valid: false, error: 'Invalid GitHub username format' };
+    }
+
+    return {
+      valid: true,
+      username,
+      normalizedUrl: `https://github.com/${username}`
+    };
+  } catch (err) {
+    return { valid: false, error: 'Malformed URL format' };
+  }
+};
+
+/**
+ * Verifies a GitHub profile URL by fetching user data from GitHub REST API
+ */
+export const verifyGitHubProfileByUrl = async (inputUrl) => {
+  const validation = parseAndValidateGitHubUrl(inputUrl);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  const { username, normalizedUrl } = validation;
+
+  try {
+    const headers = {
+      'User-Agent': 'DailyCommitClub-App',
+      Accept: 'application/vnd.github.v3+json'
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
+
+    const response = await fetch(`https://api.github.com/users/${username}`, { headers });
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { success: false, error: `GitHub profile @${username} not found` };
+      }
+      return { success: false, error: `GitHub API error: ${response.statusText}` };
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      githubId: String(data.id),
+      githubUsername: data.login,
+      githubAvatar: data.avatar_url,
+      githubProfileUrl: normalizedUrl
+    };
+  } catch (error) {
+    logger.error('GITHUB', `Failed to verify GitHub profile URL for ${username}`, error);
+    return { success: false, error: 'Failed to verify GitHub profile. Please check connection.' };
+  }
+};
+
+
+/**
  * Fetches basic GitHub user profile information using access token
  */
 export const getGitHubUser = async (accessToken) => {
