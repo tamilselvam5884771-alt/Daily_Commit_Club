@@ -1,51 +1,79 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { WorldProvider } from './context/WorldContext';
-import { CustomCursor } from './components/CustomCursor';
-
+import { Navbar } from './components/Navbar';
 import { LandingPage } from './pages/LandingPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { LoginPage } from './pages/LoginPage';
-import { MainWorldPage } from './pages/MainWorldPage';
-import { ChallengePage } from './pages/ChallengePage';
-import { ProfilePage } from './pages/ProfilePage';
+import { JoinPage } from './pages/JoinPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { getChallengeStatus } from './services/challengeApi';
 
-// Protected Route Wrapper
-const ProtectedRoute = ({ children }) => {
+const MainApp = () => {
   const { user, loading } = useAuth();
-  if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
-  return children;
+  const [currentPage, setCurrentPage] = useState('landing');
+  const [pageMode, setPageMode] = useState('join');
+  const [stats, setStats] = useState({});
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        setCurrentPage('dashboard');
+      }
+    }
+  }, [user, loading]);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const res = await getChallengeStatus();
+        if (res && res.success && res.data) {
+          setStats({
+            totalMembers: res.data.totalMembers,
+            committedTodayCount: res.data.committedTodayCount,
+            daysCount: 27
+          });
+        }
+      } catch (err) {
+        // Fallback stats
+      }
+    };
+    loadStats();
+  }, []);
+
+  const handleNavigate = (page, options = {}) => {
+    if (options.mode) {
+      setPageMode(options.mode);
+    }
+    setCurrentPage(page);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#071C15] flex items-center justify-center text-[#62907A] font-mono text-sm">
+        Loading Daily Commit Club...
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#071C15] text-[#B8D8C2] flex flex-col font-sans selection:bg-[#1C6B4D] selection:text-[#E2F1E7]">
+      <Navbar onNavigate={handleNavigate} />
+      
+      <main className="flex-1">
+        {currentPage === 'dashboard' && user ? (
+          <DashboardPage onNavigate={handleNavigate} />
+        ) : currentPage === 'join' ? (
+          <JoinPage onNavigate={handleNavigate} mode={pageMode} />
+        ) : (
+          <LandingPage onNavigate={handleNavigate} stats={stats} />
+        )}
+      </main>
+    </div>
+  );
 };
 
 export function App() {
   return (
     <AuthProvider>
-      <WorldProvider>
-        <Router>
-          {/* Awwwards Custom Magnetic Cursor */}
-          <CustomCursor />
-
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/onboarding/name" element={<Navigate to="/register" replace />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/world" element={<MainWorldPage />} />
-            <Route path="/challenge" element={<ChallengePage />} />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </WorldProvider>
+      <MainApp />
     </AuthProvider>
   );
 }
