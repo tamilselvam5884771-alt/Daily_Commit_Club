@@ -8,7 +8,6 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import githubRoutes from './routes/githubRoutes.js';
 import userRoutes from './routes/userRoutes.js';
-import buildingRoutes from './routes/buildingRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
 import challengeRoutes from './routes/challengeRoutes.js';
 import devRoutes from './routes/devRoutes.js';
@@ -53,7 +52,7 @@ app.use('/api', limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health Check Endpoint (Phase 2 Standard Format)
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
 
@@ -78,11 +77,10 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/github', githubRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/buildings', buildingRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/challenge', challengeRoutes);
 
-// Dev / Simulation routes (disabled in production)
+// Dev / Simulation routes
 app.use('/api/dev', devRoutes);
 app.post('/api/notifications/test/:userId', testNotification);
 
