@@ -8,10 +8,10 @@ export const getMe = async () => {
   }
 };
 
-export const registerUser = async (data) => {
+export const registerUser = async (name, githubUrl) => {
   const res = await fetchApi('/auth/register', {
     method: 'POST',
-    body: JSON.stringify(data)
+    body: JSON.stringify({ name, githubUrl })
   });
   if (res && res.token) {
     localStorage.setItem('dcc_token', res.token);
@@ -19,10 +19,10 @@ export const registerUser = async (data) => {
   return res;
 };
 
-export const loginUser = async (email, password) => {
+export const loginUser = async (name, githubUrl) => {
   const res = await fetchApi('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ name, githubUrl })
   });
   if (res && res.token) {
     localStorage.setItem('dcc_token', res.token);
@@ -45,11 +45,4 @@ export const logoutUser = async () => {
   } finally {
     localStorage.removeItem('dcc_token');
   }
-};
-
-export const forgotPasswordUser = async (email) => {
-  return await fetchApi('/auth/forgot-password', {
-    method: 'POST',
-    body: JSON.stringify({ email })
-  });
 };
