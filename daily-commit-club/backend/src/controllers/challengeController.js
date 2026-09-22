@@ -1,10 +1,8 @@
 import { Challenge } from '../models/Challenge.js';
 import { User } from '../models/User.js';
-import { Building } from '../models/Building.js';
 import { DailyActivity } from '../models/DailyActivity.js';
 import { runDailyCheck } from '../jobs/dailyCheck.js';
 import { completeDay, missDay } from '../services/streakService.js';
-import { damageBuilding } from '../services/buildingService.js';
 import { sendMorningReminder, sendLastChanceEmail, sendSuccessEmail, sendMissedCommitEmail } from '../services/emailService.js';
 import { getTodayDateString } from '../utils/dateUtils.js';
 
@@ -18,7 +16,7 @@ export const getActiveChallenge = async (req, res, next) => {
     if (!challenge) {
       challenge = await Challenge.create({
         name: 'Daily Commit Club',
-        description: 'Your GitHub activity keeps your world alive.',
+        description: 'Commit every day. Keep your streak alive.',
         timezone: 'Asia/Kolkata',
         dailyDeadline: '23:59',
         minimumCommits: 1,
@@ -38,39 +36,40 @@ export const getActiveChallenge = async (req, res, next) => {
 };
 
 /**
- * Get global status overview for all 10 challenge members
+ * Get global status overview for challenge members
+ * GET /api/challenge/status
  */
 export const getChallengeStatus = async (req, res, next) => {
   try {
     const activeChallenge = await Challenge.findOne({ status: 'active' });
     const dateStr = getTodayDateString();
 
-    const members = await User.find({ isActive: true })
-      .select('-__v')
-      .populate('buildingId');
-
+    const members = await User.find({ isActive: true }).select('-__v');
     const activities = await DailyActivity.find({ date: dateStr });
     const activityMap = new Map(activities.map((a) => [a.userId.toString(), a]));
 
+    let committedTodayCount = 0;
+
     const memberStatus = members.map((m) => {
       const act = activityMap.get(m._id.toString());
+      const isCommitted = act && act.status === 'completed';
+      if (isCommitted) committedTodayCount++;
+
       return {
         user: {
           id: m._id,
+          _id: m._id,
           githubUsername: m.githubUsername,
+          githubUrl: m.githubUrl,
           name: m.name,
           githubAvatar: m.githubAvatar,
           currentStreak: m.currentStreak,
+          longestStreak: m.longestStreak,
           coffeeDebt: m.coffeeDebt
         },
-        building: m.buildingId ? {
-          number: m.buildingId.buildingNumber,
-          name: m.buildingId.name,
-          health: m.buildingId.health,
-          destroyed: m.buildingId.destroyed
-        } : null,
         todayStatus: act ? act.status : 'pending',
-        todayCommitCount: act ? act.commitCount : 0
+        todayCommitCount: act ? act.commitCount : 0,
+        lastCommitMessage: act && act.repositories && act.repositories[0] ? `Committed to ${act.repositories[0].name}` : 'No commit details recorded'
       };
     });
 
@@ -80,6 +79,7 @@ export const getChallengeStatus = async (req, res, next) => {
         date: dateStr,
         challenge: activeChallenge,
         totalMembers: members.length,
+        committedTodayCount,
         members: memberStatus
       }
     });
@@ -130,7 +130,7 @@ export const testSuccessCommit = async (req, res, next) => {
     const { date, commits = 2, repo = 'owner/repo' } = req.body || {};
     const dateStr = date || getTodayDateString();
 
-    const user = await User.findById(userId).populate('buildingId');
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, error: { message: 'User not found', code: 'NOT_FOUND' } });
     }
@@ -161,23 +161,18 @@ export const testSuccessCommit = async (req, res, next) => {
 export const testMissedCommit = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const { date, damage = 40, penalty = 1 } = req.body || {};
+    const { date, penalty = 1 } = req.body || {};
     const dateStr = date || getTodayDateString();
 
-    const user = await User.findById(userId).populate('buildingId');
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, error: { message: 'User not found', code: 'NOT_FOUND' } });
     }
 
     const { activity, user: updatedUser, alreadyProcessed } = await missDay(user, dateStr, penalty);
 
-    let buildingState = {};
-    if (user.buildingId) {
-      buildingState = await damageBuilding(user.buildingId._id || user.buildingId, damage);
-    }
-
     if (!alreadyProcessed) {
-      await sendMissedCommitEmail(updatedUser, dateStr, updatedUser.coffeeDebt, buildingState);
+      await sendMissedCommitEmail(updatedUser, dateStr, updatedUser.coffeeDebt);
     }
 
     return res.status(200).json({
@@ -186,7 +181,6 @@ export const testMissedCommit = async (req, res, next) => {
         message: alreadyProcessed ? 'Already processed for date' : 'Simulated missed day completed',
         activity,
         user: updatedUser,
-        buildingState,
         alreadyProcessed
       }
     });
@@ -213,7 +207,7 @@ export const testNotification = async (req, res, next) => {
     if (type === 'MORNING_REMINDER') sent = await sendMorningReminder(user, dateStr);
     else if (type === 'LAST_CHANCE') sent = await sendLastChanceEmail(user, dateStr);
     else if (type === 'SUCCESS') sent = await sendSuccessEmail(user, dateStr, 1, user.currentStreak);
-    else if (type === 'MISSED_COMMIT') sent = await sendMissedCommitEmail(user, dateStr, user.coffeeDebt, { health: 60 });
+    else if (type === 'MISSED_COMMIT') sent = await sendMissedCommitEmail(user, dateStr, user.coffeeDebt);
 
     return res.status(200).json({
       success: true,
