@@ -28,7 +28,7 @@ const MainApp = () => {
           setStats({
             totalMembers: res.data.totalMembers,
             committedTodayCount: res.data.committedTodayCount,
-            daysCount: 27
+            daysCount: res.data.daysCount || 1
           });
         }
       } catch (err) {
