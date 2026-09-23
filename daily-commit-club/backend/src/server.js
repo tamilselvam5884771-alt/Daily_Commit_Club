@@ -3,6 +3,7 @@ dotenv.config();
 
 import app from './app.js';
 import { connectDB } from './config/db.js';
+import { seedBuildings } from './scripts/seedBuildings.js';
 import { initDailyCheckCron } from './jobs/dailyCheck.js';
 import { initReminderCrons } from './jobs/reminderCheck.js';
 import { logger } from './utils/logger.js';
@@ -12,6 +13,13 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   // Connect to Database
   await connectDB();
+
+  // Ensure default buildings exist in DB
+  try {
+    await seedBuildings();
+  } catch (err) {
+    logger.warn('SERVER', `Building seed warning: ${err.message}`);
+  }
 
   // Initialize Scheduled Cron Jobs
   initDailyCheckCron();
@@ -25,3 +33,4 @@ const startServer = async () => {
 };
 
 startServer();
+
