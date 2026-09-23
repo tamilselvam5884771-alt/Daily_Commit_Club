@@ -2,9 +2,15 @@
  * Central API Client for Daily Commit Club
  */
 
-const API_BASE_URL = '/api';
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return '/api';
+  const cleanUrl = envUrl.trim().replace(/\/+$/, '');
+  return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+};
 
 export const fetchApi = async (endpoint, options = {}) => {
+  const baseUrl = getApiBaseUrl();
   const token = localStorage.getItem('dcc_token');
 
   const headers = {
@@ -14,7 +20,7 @@ export const fetchApi = async (endpoint, options = {}) => {
   };
 
   try {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const res = await fetch(`${baseUrl}${endpoint}`, {
       ...options,
       headers
     });
@@ -31,3 +37,4 @@ export const fetchApi = async (endpoint, options = {}) => {
     throw error;
   }
 };
+
