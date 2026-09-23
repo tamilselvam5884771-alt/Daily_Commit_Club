@@ -7,24 +7,29 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshUser = async () => {
+  const refreshUser = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent && !user) {
+        setLoading(true);
+      }
       const res = await getMe();
-      if (res && res.success && res.data) {
-        setUser(res.data);
+      const userData = res?.data || res?.user;
+      if (res && res.success && userData) {
+        setUser(userData);
       } else {
         setUser(null);
       }
     } catch (err) {
       setUser(null);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    refreshUser();
+    refreshUser(false);
   }, []);
 
   const logout = async () => {
