@@ -20,9 +20,24 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration
+const allowedOriginSetting = process.env.FRONTEND_URL;
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, postman, or server-to-server)
+      if (!origin) return callback(null, true);
+      
+      if (!allowedOriginSetting || allowedOriginSetting === '*') {
+        return callback(null, true);
+      }
+
+      const origins = allowedOriginSetting.split(',').map((o) => o.trim());
+      if (origins.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+
+      return callback(null, true);
+    },
     credentials: true
   })
 );
