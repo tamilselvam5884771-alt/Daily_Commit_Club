@@ -5,6 +5,7 @@ import { runDailyCheck } from '../jobs/dailyCheck.js';
 import { completeDay, missDay } from '../services/streakService.js';
 import { sendMorningReminder, sendLastChanceEmail, sendSuccessEmail, sendMissedCommitEmail } from '../services/emailService.js';
 import { getTodayDateString } from '../utils/dateUtils.js';
+import { getTodayCommitActivity, hasQualifyingCommit } from '../services/githubService.js';
 
 /**
  * Get active challenge metadata
@@ -41,12 +42,52 @@ export const getActiveChallenge = async (req, res, next) => {
  */
 export const getChallengeStatus = async (req, res, next) => {
   try {
-    const activeChallenge = await Challenge.findOne({ status: 'active' });
-    const dateStr = getTodayDateString();
+    let activeChallenge = await Challenge.findOne({ status: 'active' });
+
+    if (!activeChallenge) {
+      activeChallenge = await Challenge.create({
+        name: 'Daily Commit Club',
+        description: 'Commit every day. Keep your streak alive.',
+        timezone: 'Asia/Kolkata',
+        dailyDeadline: '23:59',
+        minimumCommits: 1,
+        penaltyType: 'coffee',
+        penaltyAmount: 1,
+        status: 'active'
+      });
+    }
+
+    const dateStr = getTodayDateString(activeChallenge.timezone || 'Asia/Kolkata');
 
     const members = await User.find({ isActive: true }).select('-__v');
-    const activities = await DailyActivity.find({ date: dateStr });
+    let activities = await DailyActivity.find({ date: dateStr });
     const activityMap = new Map(activities.map((a) => [a.userId.toString(), a]));
+
+    // Live sync today's commit status for pending members
+    for (const m of members) {
+      const act = activityMap.get(m._id.toString());
+      if (!act || act.status === 'pending') {
+        try {
+          const activityResult = await getTodayCommitActivity(m.githubUsername, dateStr);
+          if (activityResult && activityResult.success && hasQualifyingCommit(activityResult, activeChallenge.minimumCommits)) {
+            const { activity, user: updatedUser } = await completeDay(
+              m,
+              dateStr,
+              activityResult.commitCount,
+              activityResult.repositories
+            );
+            activityMap.set(m._id.toString(), activity);
+            if (updatedUser) {
+              m.currentStreak = updatedUser.currentStreak;
+              m.longestStreak = updatedUser.longestStreak;
+              m.totalCompletedDays = updatedUser.totalCompletedDays;
+            }
+          }
+        } catch (e) {
+          // Ignore live sync failures gracefully
+        }
+      }
+    }
 
     let committedTodayCount = 0;
 
@@ -65,7 +106,10 @@ export const getChallengeStatus = async (req, res, next) => {
           githubAvatar: m.githubAvatar,
           currentStreak: m.currentStreak,
           longestStreak: m.longestStreak,
-          coffeeDebt: m.coffeeDebt
+          totalCompletedDays: m.totalCompletedDays,
+          totalMissedDays: m.totalMissedDays,
+          coffeeDebt: m.coffeeDebt,
+          lastSuccessfulCommitDate: m.lastSuccessfulCommitDate
         },
         todayStatus: act ? act.status : 'pending',
         todayCommitCount: act ? act.commitCount : 0,
@@ -73,11 +117,14 @@ export const getChallengeStatus = async (req, res, next) => {
       };
     });
 
+    const daysCount = Math.max(1, Math.floor((new Date() - new Date(activeChallenge.startDate)) / (1000 * 60 * 60 * 24)) + 1);
+
     return res.status(200).json({
       success: true,
       data: {
         date: dateStr,
         challenge: activeChallenge,
+        daysCount,
         totalMembers: members.length,
         committedTodayCount,
         members: memberStatus
@@ -87,6 +134,7 @@ export const getChallengeStatus = async (req, res, next) => {
     next(error);
   }
 };
+
 
 /**
  * Dev Endpoint: Manually trigger check for all members
