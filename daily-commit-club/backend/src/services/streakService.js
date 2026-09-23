@@ -46,6 +46,14 @@ export const completeDay = async (user, dateStr, commitCount = 1, repositories =
   const streakAfter = streakBefore + 1;
   const longestStreak = Math.max(user.longestStreak || 0, streakAfter);
 
+  const formattedRepos = (repositories || []).map((r) => {
+    if (typeof r === 'string') return { name: r, commits: 1 };
+    return {
+      name: r.name || r.nameWithOwner || 'repository',
+      commits: typeof r.commits === 'number' ? r.commits : 1
+    };
+  });
+
   // Update Daily Activity record
   const activity = await DailyActivity.findOneAndUpdate(
     { userId: user._id, date: dateStr },
@@ -53,7 +61,7 @@ export const completeDay = async (user, dateStr, commitCount = 1, repositories =
       userId: user._id,
       date: dateStr,
       commitCount,
-      repositories,
+      repositories: formattedRepos,
       qualifyingCommit: true,
       status: 'completed',
       streakBefore,
