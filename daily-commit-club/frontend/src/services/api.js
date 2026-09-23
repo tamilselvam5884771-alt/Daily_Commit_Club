@@ -25,13 +25,23 @@ export const fetchApi = async (endpoint, options = {}) => {
       headers
     });
 
-    const data = await res.json();
+    const text = await res.text();
+    let data = null;
 
-    if (!res.ok) {
-      throw new Error(data?.error?.message || `HTTP ${res.status} Error`);
+    if (text && text.trim()) {
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = { error: { message: `Server returned non-JSON response (HTTP ${res.status}).` } };
+      }
     }
 
-    return data;
+    if (!res.ok) {
+      const errMsg = data?.error?.message || data?.message || `HTTP ${res.status} Error`;
+      throw new Error(errMsg);
+    }
+
+    return data || { success: true };
   } catch (error) {
     console.warn(`[API Call Failed] ${endpoint}:`, error.message);
     throw error;
