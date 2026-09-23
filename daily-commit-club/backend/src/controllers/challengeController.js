@@ -6,6 +6,7 @@ import { completeDay, missDay } from '../services/streakService.js';
 import { sendMorningReminder, sendLastChanceEmail, sendSuccessEmail, sendMissedCommitEmail } from '../services/emailService.js';
 import { getTodayDateString } from '../utils/dateUtils.js';
 import { getTodayCommitActivity, hasQualifyingCommit } from '../services/githubService.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Get active challenge metadata
@@ -60,34 +61,8 @@ export const getChallengeStatus = async (req, res, next) => {
     const dateStr = getTodayDateString(activeChallenge.timezone || 'Asia/Kolkata');
 
     const members = await User.find({ isActive: true }).select('-__v');
-    let activities = await DailyActivity.find({ date: dateStr });
+    const activities = await DailyActivity.find({ date: dateStr });
     const activityMap = new Map(activities.map((a) => [a.userId.toString(), a]));
-
-    // Live sync today's commit status for pending members
-    for (const m of members) {
-      const act = activityMap.get(m._id.toString());
-      if (!act || act.status === 'pending') {
-        try {
-          const activityResult = await getTodayCommitActivity(m.githubUsername, dateStr);
-          if (activityResult && activityResult.success && hasQualifyingCommit(activityResult, activeChallenge.minimumCommits)) {
-            const { activity, user: updatedUser } = await completeDay(
-              m,
-              dateStr,
-              activityResult.commitCount,
-              activityResult.repositories
-            );
-            activityMap.set(m._id.toString(), activity);
-            if (updatedUser) {
-              m.currentStreak = updatedUser.currentStreak;
-              m.longestStreak = updatedUser.longestStreak;
-              m.totalCompletedDays = updatedUser.totalCompletedDays;
-            }
-          }
-        } catch (e) {
-          // Ignore live sync failures gracefully
-        }
-      }
-    }
 
     let committedTodayCount = 0;
 
@@ -96,19 +71,21 @@ export const getChallengeStatus = async (req, res, next) => {
       const isCommitted = act && act.status === 'completed';
       if (isCommitted) committedTodayCount++;
 
+      const cleanUsername = m.githubUsername ? m.githubUsername.trim().replace(/\s+/g, '-') : 'user';
+
       return {
         user: {
           id: m._id,
           _id: m._id,
-          githubUsername: m.githubUsername,
-          githubUrl: m.githubUrl,
+          githubUsername: cleanUsername,
+          githubUrl: m.githubUrl || `https://github.com/${cleanUsername}`,
           name: m.name,
-          githubAvatar: m.githubAvatar,
-          currentStreak: m.currentStreak,
-          longestStreak: m.longestStreak,
-          totalCompletedDays: m.totalCompletedDays,
-          totalMissedDays: m.totalMissedDays,
-          coffeeDebt: m.coffeeDebt,
+          githubAvatar: m.githubAvatar || `https://github.com/${cleanUsername}.png`,
+          currentStreak: m.currentStreak || 0,
+          longestStreak: m.longestStreak || 0,
+          totalCompletedDays: m.totalCompletedDays || 0,
+          totalMissedDays: m.totalMissedDays || 0,
+          coffeeDebt: m.coffeeDebt || 0,
           lastSuccessfulCommitDate: m.lastSuccessfulCommitDate
         },
         todayStatus: act ? act.status : 'pending',
@@ -130,6 +107,65 @@ export const getChallengeStatus = async (req, res, next) => {
         members: memberStatus
       }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Perform manual GitHub sync for a single member
+ * POST /api/challenge/sync-user/:userId
+ */
+export const syncSingleUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'User profile not found.' }
+      });
+    }
+
+    const activeChallenge = await Challenge.findOne({ status: 'active' });
+    const dateStr = getTodayDateString(activeChallenge?.timezone || 'Asia/Kolkata');
+    const cleanUsername = user.githubUsername ? user.githubUsername.trim().replace(/\s+/g, '-') : 'user';
+
+    logger.info('SYNC', `Manual GitHub sync requested for @${cleanUsername} on date ${dateStr}`);
+
+    const activityResult = await getTodayCommitActivity(cleanUsername, dateStr);
+
+    if (!activityResult.success) {
+      return res.status(200).json({
+        success: false,
+        errorType: 'GITHUB_API_ERROR',
+        status: 'github_api_error',
+        message: 'GitHub API temporarily unavailable (Rate limit 403 or connection timeout). No penalty applied.',
+        user
+      });
+    }
+
+    if (hasQualifyingCommit(activityResult, activeChallenge?.minimumCommits || 1)) {
+      const { activity, user: updatedUser } = await completeDay(
+        user,
+        dateStr,
+        activityResult.commitCount,
+        activityResult.repositories
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: `Synced with GitHub! Found ${activityResult.commitCount} commit(s) today.`,
+        activity,
+        user: updatedUser
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        message: `Synced with GitHub. 0 commits recorded for today (${dateStr} IST).`,
+        user
+      });
+    }
   } catch (error) {
     next(error);
   }
