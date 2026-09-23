@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { getChallengeStatus } from '../services/challengeApi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { getChallengeStatus, syncUserCommits } from '../services/challengeApi';
 import { MemberCard } from '../components/MemberCard';
 import { MemberProfileModal } from '../components/MemberProfileModal';
 import { useAuth } from '../context/AuthContext';
@@ -8,37 +8,74 @@ export const DashboardPage = ({ onNavigate }) => {
   const { user, refreshUser } = useAuth();
   const [statusData, setStatusData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatusText, setSyncStatusText] = useState(null);
+  const [syncError, setSyncError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
 
-  const fetchStatus = async (isManual = false) => {
+  const fetchStatus = useCallback(async (isManual = false) => {
     try {
-      if (isManual) setRefreshing(true);
+      if (isManual) setSyncing(true);
       const res = await getChallengeStatus();
       if (res && res.success && res.data) {
         setStatusData(res.data);
         setLastUpdated(new Date());
+        setSyncError(null);
       }
       if (refreshUser) {
-        await refreshUser();
+        await refreshUser(true); // Silent refresh - does not set global loading to true
       }
     } catch (err) {
       console.warn('Failed to load challenge status from database', err);
+      setSyncError('Unable to connect to backend server right now.');
     } finally {
       setLoading(false);
-      setRefreshing(false);
+      if (isManual) setSyncing(false);
     }
-  };
+  }, [refreshUser]);
 
   useEffect(() => {
-    fetchStatus();
-    // Auto-refresh every 15s to keep data up to time
+    fetchStatus(false);
+    // Background polling every 60s created ONLY ONCE on mount
     const interval = setInterval(() => {
-      fetchStatus();
-    }, 15000);
+      fetchStatus(false);
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleManualSync = async () => {
+    if (!user || syncing) return;
+    const targetUserId = user._id || user.id;
+    if (!targetUserId) return;
+
+    setSyncing(true);
+    setSyncStatusText('SYNCING...');
+    setSyncError(null);
+
+    try {
+      const res = await syncUserCommits(targetUserId);
+      if (res && res.success) {
+        setSyncStatusText('SYNCED ✓');
+        await fetchStatus(false);
+      } else if (res && res.errorType === 'GITHUB_API_ERROR') {
+        setSyncStatusText('GITHUB UNAVAILABLE');
+        setSyncError(res.message || 'GitHub API rate limit 403 / connection timeout. No penalty applied.');
+      } else {
+        setSyncStatusText('SYNCED ✓');
+        await fetchStatus(false);
+      }
+    } catch (err) {
+      console.warn('Manual sync error:', err);
+      setSyncStatusText('SYNC ERROR');
+      setSyncError('GitHub sync request encountered a network error.');
+    } finally {
+      setSyncing(false);
+      setTimeout(() => {
+        setSyncStatusText(null);
+      }, 4000);
+    }
+  };
 
   const dateStr = statusData?.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const members = statusData?.members || [];
@@ -70,7 +107,7 @@ export const DashboardPage = ({ onNavigate }) => {
 
   return (
     <div className="min-h-[calc(100vh-65px)] bg-[#071C15] bg-radial-green bg-grain px-4 py-8 md:py-12">
-      <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+      <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header Section */}
         <div className="editorial-card p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-[#15533D]">
@@ -80,7 +117,7 @@ export const DashboardPage = ({ onNavigate }) => {
                 DAY {daysCount} • {dateStr}
               </span>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-[#238561] bg-[#103D2E] border border-[#1C6B4D]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#238561] animate-ping" /> LIVE SYNC
+                <span className="w-1.5 h-1.5 rounded-full bg-[#238561]" /> SYNC STRATEGY: 60S / MANUAL
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-widest text-[#E2F1E7] uppercase mt-1">
@@ -110,6 +147,14 @@ export const DashboardPage = ({ onNavigate }) => {
             </div>
           </div>
         </div>
+
+        {/* Sync Error Banner if any */}
+        {syncError && (
+          <div className="bg-[#0B2A20] border border-[#1C6B4D] p-3 rounded text-xs font-mono text-[#8EBDA5] flex items-center justify-between">
+            <span>⚠️ {syncError}</span>
+            <button onClick={() => fetchStatus(true)} className="underline hover:text-[#E2F1E7]">RETRY</button>
+          </div>
+        )}
 
         {/* Logged-In User Account Section */}
         {user && (
@@ -151,6 +196,10 @@ export const DashboardPage = ({ onNavigate }) => {
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold tracking-wider uppercase status-committed">
                       <span>✓</span> COMMITTED ({currentTodayCommits} {currentTodayCommits === 1 ? 'COMMIT' : 'COMMITS'})
                     </span>
+                  ) : currentTodayStatus === 'github_api_error' ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold tracking-wider uppercase status-waiting">
+                      <span>⚠</span> GITHUB API UNAVAILABLE
+                    </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold tracking-wider uppercase status-waiting">
                       <span>○</span> PENDING COMMIT
@@ -159,12 +208,12 @@ export const DashboardPage = ({ onNavigate }) => {
                 </div>
 
                 <button
-                  onClick={() => fetchStatus(true)}
-                  disabled={refreshing}
-                  className="px-3.5 py-2 bg-[#15533D] hover:bg-[#1C6B4D] text-[#E2F1E7] text-xs font-mono font-bold tracking-wider rounded border border-[#1C6B4D] transition-colors disabled:opacity-50"
-                  title="Refresh commit status from GitHub"
+                  onClick={handleManualSync}
+                  disabled={syncing}
+                  className="px-3.5 py-2 bg-[#15533D] hover:bg-[#1C6B4D] text-[#E2F1E7] text-xs font-mono font-bold tracking-wider rounded border border-[#1C6B4D] transition-colors disabled:opacity-50 min-w-[130px] text-center"
+                  title="Check today's commit status on GitHub"
                 >
-                  {refreshing ? '↻ SYNCING...' : '↻ SYNC GITHUB'}
+                  {syncStatusText || (syncing ? '↻ SYNCING...' : '↻ SYNC GITHUB')}
                 </button>
               </div>
             </div>
@@ -219,17 +268,17 @@ export const DashboardPage = ({ onNavigate }) => {
                 )}
                 <button
                   onClick={() => fetchStatus(true)}
-                  disabled={refreshing}
+                  disabled={syncing}
                   className="text-xs font-mono text-[#62907A] hover:text-[#B8D8C2] transition-colors disabled:opacity-50"
                 >
-                  {refreshing ? '↻ Syncing...' : '↻ Refresh'}
+                  {syncing ? '↻ Syncing...' : '↻ Refresh'}
                 </button>
               </div>
             </div>
 
             {loading && members.length === 0 ? (
               <div className="editorial-card p-12 text-center text-[#62907A] font-mono text-xs">
-                Retrieving live commit status from database...
+                Retrieving club members from database...
               </div>
             ) : members.length === 0 ? (
               <div className="editorial-card p-8 text-center space-y-3 border border-[#15533D]">
@@ -244,13 +293,14 @@ export const DashboardPage = ({ onNavigate }) => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {members.map((member, idx) => {
+                  const mId = member.user?._id || member.user?.id;
                   const isCurrent = user && (
-                    (member.user?._id || member.user?.id)?.toString() === (user._id || user.id)?.toString() ||
+                    mId?.toString() === (user._id || user.id)?.toString() ||
                     member.user?.githubUsername?.toLowerCase() === user.githubUsername?.toLowerCase()
                   );
                   return (
                     <MemberCard
-                      key={member.user?.id || member.user?._id || idx}
+                      key={mId || member.user?.githubUsername || idx}
                       member={member}
                       isCurrentUser={Boolean(isCurrent)}
                       onClick={(m) => setSelectedMember(m)}
