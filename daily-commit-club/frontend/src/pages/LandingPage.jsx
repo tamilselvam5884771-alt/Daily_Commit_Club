@@ -1,9 +1,9 @@
 import React from 'react';
 
 export const LandingPage = ({ onNavigate, stats = {} }) => {
-  const memberCount = stats.totalMembers || 10;
-  const daysCount = stats.daysCount || 27;
-  const committedTodayCount = stats.committedTodayCount !== undefined ? stats.committedTodayCount : 8;
+  const memberCount = stats.totalMembers ?? 0;
+  const daysCount = stats.daysCount ?? 1;
+  const committedTodayCount = stats.committedTodayCount ?? 0;
 
   return (
     <div className="min-h-[calc(100vh-65px)] bg-[#071C15] bg-radial-green bg-grain flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
