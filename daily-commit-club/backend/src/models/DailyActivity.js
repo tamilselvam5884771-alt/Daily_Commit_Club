@@ -17,7 +17,8 @@ const dailyActivitySchema = new mongoose.Schema(
     },
     repositories: [
       {
-        type: String
+        name: { type: String, required: true },
+        commits: { type: Number, default: 1 }
       }
     ],
     qualifyingCommit: {
