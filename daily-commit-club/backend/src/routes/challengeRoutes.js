@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getActiveChallenge,
   getChallengeStatus,
+  syncSingleUser,
   checkAllUsers,
   checkSingleUser,
   testSuccessCommit,
@@ -11,9 +12,10 @@ import {
 
 const router = express.Router();
 
-// Public challenge status
+// Public challenge status & sync
 router.get('/', getActiveChallenge);
 router.get('/status', getChallengeStatus);
+router.post('/sync-user/:userId', syncSingleUser);
 
 // Development / Testing endpoints
 router.post('/check-all', checkAllUsers);
