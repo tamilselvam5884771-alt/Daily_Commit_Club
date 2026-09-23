@@ -246,7 +246,7 @@ export const MainWorldPage = () => {
           </div>
 
           <div className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-slate-900/90 to-amber-950/80 border border-amber-500/40 text-center shadow-xl">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">DAY 27 • GROUP STREAK</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">CHALLENGE STATUS • GROUP STREAK</div>
             <div className="text-lg font-black text-amber-300 font-cinzel flex items-center justify-center gap-1.5">
               <Flame className="w-5 h-5 text-amber-500 animate-bounce" /> GROUP STREAK {maxStreak} DAYS
             </div>
