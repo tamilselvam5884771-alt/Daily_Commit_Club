@@ -38,10 +38,10 @@ export const MainWorldPage = () => {
     { top: '70%', left: '68%' }
   ];
 
-  // Refresh world state periodically
+  // Refresh world state periodically (silently without re-triggering loading state)
   useEffect(() => {
     const interval = setInterval(() => {
-      refreshWorld();
+      refreshWorld(true);
     }, 45000);
     return () => clearInterval(interval);
   }, []);

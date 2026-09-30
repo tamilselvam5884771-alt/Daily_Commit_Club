@@ -13,9 +13,9 @@ export const WorldProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [season, setSeason] = useState('spring');
 
-  const refreshWorld = async () => {
+  const refreshWorld = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [bRes, cRes] = await Promise.allSettled([
         getAllBuildings(),
         getChallengeStatus()
@@ -41,7 +41,7 @@ export const WorldProvider = ({ children }) => {
     } catch (err) {
       console.warn('World fetch error:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

@@ -71,25 +71,19 @@ app.use('/api', limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Preflight OPTIONS for all API endpoints
+app.options('*', cors());
+
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
-
-  if (isDbConnected) {
-    return res.status(200).json({
-      success: true,
-      status: 'healthy',
-      database: 'connected',
-      environment: process.env.NODE_ENV || 'development'
-    });
-  } else {
-    return res.status(503).json({
-      success: false,
-      status: 'unhealthy',
-      database: 'disconnected',
-      environment: process.env.NODE_ENV || 'development'
-    });
-  }
+  return res.status(200).json({
+    success: true,
+    message: "Daily Commit Club API is running",
+    status: isDbConnected ? 'healthy' : 'degraded',
+    database: isDbConnected ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // API Routes Mount

@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.get('/me', protect, getMyActivity);
 router.get('/me/today', protect, getMyTodayActivity);
+router.get('/today', protect, getMyTodayActivity);
 router.get('/user/:id', getUserActivity);
+router.get('/:id', getUserActivity);
 
 export default router;
