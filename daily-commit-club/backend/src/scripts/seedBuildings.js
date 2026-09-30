@@ -100,9 +100,12 @@ const BUILDINGS_PRESETS = [
 
 export const seedBuildings = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/daily_commit_club';
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
     if (mongoose.connection.readyState === 0) {
-      logger.info('SEED', `Connecting to MongoDB at ${mongoUri}...`);
+      if (!mongoUri) {
+        throw new Error('MONGODB_URI or MONGO_URI environment variable is missing');
+      }
+      logger.info('SEED', 'Connecting to MongoDB...');
       await mongoose.connect(mongoUri);
     }
 

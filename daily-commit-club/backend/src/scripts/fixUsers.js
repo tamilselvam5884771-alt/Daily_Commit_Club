@@ -5,7 +5,11 @@ dotenv.config();
 import { User } from '../models/User.js';
 
 async function fixUsers() {
-  await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/daily_commit_club');
+  const mongoUri = process.env.MONGODB_URI;
+  if (!mongoUri) {
+    throw new Error('MONGODB_URI environment variable is missing');
+  }
+  await mongoose.connect(mongoUri);
   const users = await User.find({});
   for (const u of users) {
     let username = (u.githubUsername || '').trim().replace(/\s+/g, '-');

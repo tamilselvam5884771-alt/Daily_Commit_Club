@@ -1,14 +1,22 @@
 import { Building } from '../models/Building.js';
 import { claimBuilding } from '../services/buildingService.js';
+import { seedBuildings } from '../scripts/seedBuildings.js';
 
 /**
  * List all buildings
  */
 export const getAllBuildings = async (req, res, next) => {
   try {
-    const buildings = await Building.find()
+    let buildings = await Building.find()
       .sort({ buildingNumber: 1 })
       .populate('ownerId', 'githubUsername name profileImage githubAvatar currentStreak');
+
+    if (!buildings || buildings.length === 0) {
+      await seedBuildings();
+      buildings = await Building.find()
+        .sort({ buildingNumber: 1 })
+        .populate('ownerId', 'githubUsername name profileImage githubAvatar currentStreak');
+    }
 
     return res.status(200).json({
       success: true,

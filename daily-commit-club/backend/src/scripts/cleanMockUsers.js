@@ -8,8 +8,11 @@ import { Building } from '../models/Building.js';
 import { logger } from '../utils/logger.js';
 
 export const cleanMockUsers = async () => {
-  const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/daily_commit_club';
+  const mongoUri = process.env.MONGODB_URI;
   if (mongoose.connection.readyState === 0) {
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is missing');
+    }
     await mongoose.connect(mongoUri);
   }
 

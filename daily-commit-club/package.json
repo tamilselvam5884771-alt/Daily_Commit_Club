@@ -1,13 +1,12 @@
 {
-  "name": "daily-commit-club-backend",
+  "name": "daily-commit-club-root",
   "version": "1.0.0",
-  "description": "Backend foundation for Daily Commit Club - Your GitHub activity keeps your world alive.",
+  "private": true,
   "type": "module",
-  "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "seed:buildings": "node src/scripts/seedBuildings.js"
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev"
   },
   "dependencies": {
     "@octokit/graphql": "^8.2.1",

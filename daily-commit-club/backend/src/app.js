@@ -4,20 +4,24 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser';
 
 import authRoutes from './routes/authRoutes.js';
 import githubRoutes from './routes/githubRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
 import challengeRoutes from './routes/challengeRoutes.js';
+import buildingRoutes from './routes/buildingRoutes.js';
+import cronRoutes from './routes/cronRoutes.js';
 import devRoutes from './routes/devRoutes.js';
 import { testNotification } from './controllers/challengeController.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 const app = express();
 
-// Security Middleware
+// Security & Cookie Middleware
 app.use(helmet());
+app.use(cookieParser());
 
 // CORS configuration
 const allowedOriginSetting = process.env.FRONTEND_URL;
@@ -94,6 +98,8 @@ app.use('/api/github', githubRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/challenge', challengeRoutes);
+app.use('/api/buildings', buildingRoutes);
+app.use('/api/cron', cronRoutes);
 
 // Dev / Simulation routes
 app.use('/api/dev', devRoutes);

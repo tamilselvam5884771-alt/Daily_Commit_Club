@@ -5,8 +5,15 @@ export const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) {
     return mongoose.connection;
   }
+
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+
+  if (!mongoUri) {
+    logger.error('DATABASE', 'MONGODB_URI / MONGO_URI environment variable is missing');
+    throw new Error('MONGODB_URI or MONGO_URI environment variable is missing');
+  }
+
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/daily_commit_club';
     const conn = await mongoose.connect(mongoUri);
     logger.info('DATABASE', `MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
     return conn;

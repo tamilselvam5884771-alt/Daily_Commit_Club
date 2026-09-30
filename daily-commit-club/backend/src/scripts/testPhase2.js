@@ -17,7 +17,10 @@ import { logger } from '../utils/logger.js';
 export const runPhase2Tests = async () => {
   try {
     logger.info('PHASE2_TEST', '=== Starting Comprehensive Phase 2 Verification Suite ===');
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/daily_commit_club';
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is missing');
+    }
     await mongoose.connect(mongoUri);
 
     // Clean test collection data
