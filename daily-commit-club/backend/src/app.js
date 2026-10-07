@@ -75,7 +75,7 @@ app.use(express.urlencoded({ extended: true }));
 app.options('*', cors());
 
 // Health Check Endpoint
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/api'], (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
   return res.status(200).json({
     success: true,
