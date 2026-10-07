@@ -8,10 +8,11 @@ export const getMe = async () => {
   }
 };
 
-export const registerUser = async (name, githubUrl) => {
+export const registerUser = async (data) => {
+  const payload = typeof data === 'object' ? data : { name: arguments[0], githubUrl: arguments[1] };
   const res = await fetchApi('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ name, githubUrl })
+    body: JSON.stringify(payload)
   });
   if (res && res.token) {
     localStorage.setItem('dcc_token', res.token);
@@ -19,10 +20,13 @@ export const registerUser = async (name, githubUrl) => {
   return res;
 };
 
-export const loginUser = async (name, githubUrl) => {
+export const loginUser = async (nameOrData, password) => {
+  const payload = typeof nameOrData === 'object' 
+    ? nameOrData 
+    : { name: nameOrData, password };
   const res = await fetchApi('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ name, githubUrl })
+    body: JSON.stringify(payload)
   });
   if (res && res.token) {
     localStorage.setItem('dcc_token', res.token);

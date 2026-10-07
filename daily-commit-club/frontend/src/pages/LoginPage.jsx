@@ -11,66 +11,47 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
 
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Forgot password modal state
-  const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotSuccess, setForgotSuccess] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!email || !password) {
-      setErrorMsg('Please enter both email and password.');
+    if (!name || !password) {
+      setErrorMsg('Please enter both name and password.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      audioService.playClick();
-      const res = await loginUser(email, password);
+      if (audioService && audioService.playClick) audioService.playClick();
+      const res = await loginUser({ name: name.trim(), password });
 
       if (res && res.success) {
         await refreshUser();
-        audioService.playVictoryFanfare();
+        if (audioService && audioService.playVictoryFanfare) audioService.playVictoryFanfare();
         navigate('/world');
       } else {
-        setErrorMsg(res?.error?.message || 'Invalid email or password.');
+        setErrorMsg(res?.error?.message || 'Invalid name or password.');
       }
     } catch (err) {
-      setErrorMsg(err.message || 'Login failed.');
+      setErrorMsg(err.message || 'Invalid name or password.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    if (!forgotEmail) return;
-    try {
-      audioService.playClick();
-      const res = await forgotPasswordUser(forgotEmail);
-      setForgotSuccess(res?.message || 'If registered, reset instructions have been sent.');
-    } catch (err) {
-      setForgotSuccess('If registered, reset instructions have been sent.');
     }
   };
 
   return (
     <WorldBackground season="spring">
       <div className="relative min-h-screen flex items-center justify-center p-4 z-20">
-        {/* Minimal Form Card Overlaying the World */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           className="relative w-full max-w-md ornate-border p-8 rounded-3xl bg-slate-900/90 border border-amber-500/40 shadow-2xl backdrop-blur-xl text-center"
         >
-          {/* Header Title */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold uppercase tracking-widest mb-3">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
             <span>Realm Entrance</span>
@@ -86,15 +67,15 @@ export const LoginPage = () => {
           <form onSubmit={handleLogin} className="mt-6 space-y-4 text-left">
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                Email Address
+                Your Name
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
+                <User className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
                 <input
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition text-sm"
                 />
               </div>
@@ -105,13 +86,6 @@ export const LoginPage = () => {
                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-400">
                   Password
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotModal(true)}
-                  className="text-[11px] text-amber-400/80 hover:text-amber-300 hover:underline"
-                >
-                  Forgot password?
-                </button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />

@@ -9,8 +9,8 @@ export const connectDB = async () => {
   const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
 
   if (!mongoUri) {
-    logger.error('DATABASE', 'MONGODB_URI / MONGO_URI environment variable is missing');
-    throw new Error('MONGODB_URI or MONGO_URI environment variable is missing');
+    logger.error('DATABASE', 'MONGODB_URI environment variable is missing');
+    throw new Error('MONGODB_URI environment variable is missing');
   }
 
   try {

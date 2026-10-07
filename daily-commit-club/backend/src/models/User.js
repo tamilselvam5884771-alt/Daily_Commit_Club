@@ -1,11 +1,19 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
-      trim: true
+      unique: true,
+      trim: true,
+      index: true
+    },
+    passwordHash: {
+      type: String,
+      required: true,
+      select: false
     },
     githubUrl: {
       type: String,
@@ -70,6 +78,11 @@ const userSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  if (!this.passwordHash) return false;
+  return await bcrypt.compare(candidatePassword, this.passwordHash);
+};
 
 export const User = mongoose.model('User', userSchema);
 

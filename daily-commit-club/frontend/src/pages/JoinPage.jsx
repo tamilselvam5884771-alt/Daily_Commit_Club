@@ -6,6 +6,8 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
   const [mode, setMode] = useState(initialMode); // 'join' or 'login'
   const [name, setName] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   const [verifying, setVerifying] = useState(false);
   const [verifiedProfile, setVerifiedProfile] = useState(null);
@@ -19,6 +21,8 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
     setMode(initialMode);
     setErrorMessage('');
     setVerifiedProfile(null);
+    setPassword('');
+    setConfirmPassword('');
   }, [initialMode]);
 
   const handleVerify = async (e) => {
@@ -52,22 +56,46 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!verifiedProfile) {
-      setErrorMessage('Please verify your GitHub profile first.');
-      return;
-    }
+    setErrorMessage('');
 
-    if (mode === 'join' && (!name || !name.trim())) {
+    if (!name || !name.trim()) {
       setErrorMessage('Please enter your name.');
       return;
     }
 
+    if (!password) {
+      setErrorMessage('Please enter your password.');
+      return;
+    }
+
+    if (mode === 'join') {
+      if (password.length < 6) {
+        setErrorMessage('Password must be at least 6 characters long.');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setErrorMessage('Password and confirm password do not match.');
+        return;
+      }
+
+      if (!verifiedProfile) {
+        setErrorMessage('Please verify your GitHub profile URL first.');
+        return;
+      }
+    }
+
     setSubmitting(true);
-    setErrorMessage('');
 
     try {
       if (mode === 'join') {
-        const res = await registerUser(name.trim(), githubUrl.trim());
+        const payload = {
+          name: name.trim(),
+          githubUrl: githubUrl.trim(),
+          password,
+          confirmPassword
+        };
+        const res = await registerUser(payload);
         if (res && res.success) {
           await refreshUser();
           onNavigate('dashboard');
@@ -75,12 +103,12 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
           setErrorMessage(res?.error?.message || 'Registration failed.');
         }
       } else {
-        const res = await loginUser(name.trim(), githubUrl.trim());
+        const res = await loginUser({ name: name.trim(), password });
         if (res && res.success) {
           await refreshUser();
           onNavigate('dashboard');
         } else {
-          setErrorMessage(res?.error?.message || 'Login failed. User not found.');
+          setErrorMessage(res?.error?.message || 'Invalid name or password.');
         }
       }
     } catch (err) {
@@ -117,10 +145,10 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Your Name */}
           <div>
-            <label className="block text-xs font-bold tracking-widest text-[#8EBDA5] uppercase mb-2">
+            <label className="block text-xs font-bold tracking-widest text-[#8EBDA5] uppercase mb-1.5">
               Your name
             </label>
             <input
@@ -128,42 +156,44 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Hariharasudhan"
-              required={mode === 'join'}
+              required
               className="w-full bg-[#071C15] border border-[#15533D] focus:border-[#1C6B4D] text-[#E2F1E7] px-4 py-2.5 rounded text-sm outline-none transition-colors placeholder-[#62907A]"
             />
           </div>
 
-          {/* GitHub profile URL */}
-          <div>
-            <label className="block text-xs font-bold tracking-widest text-[#8EBDA5] uppercase mb-2">
-              GitHub profile URL
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={githubUrl}
-                onChange={(e) => {
-                  setGithubUrl(e.target.value);
-                  setVerifiedProfile(null);
-                }}
-                placeholder="https://github.com/username"
-                required
-                className="w-full bg-[#071C15] border border-[#15533D] focus:border-[#1C6B4D] text-[#E2F1E7] px-4 py-2.5 rounded text-sm outline-none transition-colors placeholder-[#62907A] font-mono text-xs"
-              />
-              <button
-                type="button"
-                onClick={handleVerify}
-                disabled={verifying || !githubUrl.trim()}
-                className="px-4 py-2.5 bg-[#103D2E] hover:bg-[#15533D] text-[#B8D8C2] text-xs font-bold tracking-wider rounded border border-[#15533D] whitespace-nowrap transition-all disabled:opacity-50"
-              >
-                {verifying ? 'VERIFYING...' : 'VERIFY GITHUB'}
-              </button>
+          {/* GitHub profile URL (Registration Only) */}
+          {mode === 'join' && (
+            <div>
+              <label className="block text-xs font-bold tracking-widest text-[#8EBDA5] uppercase mb-1.5">
+                GitHub profile URL
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={githubUrl}
+                  onChange={(e) => {
+                    setGithubUrl(e.target.value);
+                    setVerifiedProfile(null);
+                  }}
+                  placeholder="https://github.com/username"
+                  required
+                  className="w-full bg-[#071C15] border border-[#15533D] focus:border-[#1C6B4D] text-[#E2F1E7] px-4 py-2.5 rounded text-sm outline-none transition-colors placeholder-[#62907A] font-mono text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={handleVerify}
+                  disabled={verifying || !githubUrl.trim()}
+                  className="px-4 py-2.5 bg-[#103D2E] hover:bg-[#15533D] text-[#B8D8C2] text-xs font-bold tracking-wider rounded border border-[#15533D] whitespace-nowrap transition-all disabled:opacity-50"
+                >
+                  {verifying ? 'VERIFYING...' : 'VERIFY GITHUB'}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Verification Success Box */}
-          {verifiedProfile && (
-            <div className="bg-[#071C15] border border-[#1C6B4D] p-4 rounded flex items-center gap-3 animate-fade-in">
+          {mode === 'join' && verifiedProfile && (
+            <div className="bg-[#071C15] border border-[#1C6B4D] p-3 rounded flex items-center gap-3 animate-fade-in">
               <img
                 src={verifiedProfile.avatar}
                 alt={verifiedProfile.username}
@@ -171,7 +201,7 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
               />
               <div>
                 <div className="text-xs font-bold text-[#B8D8C2] flex items-center gap-1.5">
-                  <span className="text-[#238561]">✓</span> GitHub account found
+                  <span className="text-[#238561]">✓</span> GitHub account verified
                 </div>
                 <div className="text-xs font-mono text-[#8EBDA5] mt-0.5">
                   @{verifiedProfile.username}
@@ -180,10 +210,42 @@ export const JoinPage = ({ onNavigate, mode: initialMode = 'join' }) => {
             </div>
           )}
 
+          {/* Password */}
+          <div>
+            <label className="block text-xs font-bold tracking-widest text-[#8EBDA5] uppercase mb-1.5">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+              required
+              className="w-full bg-[#071C15] border border-[#15533D] focus:border-[#1C6B4D] text-[#E2F1E7] px-4 py-2.5 rounded text-sm outline-none transition-colors placeholder-[#62907A]"
+            />
+          </div>
+
+          {/* Confirm Password (Registration Only) */}
+          {mode === 'join' && (
+            <div>
+              <label className="block text-xs font-bold tracking-widest text-[#8EBDA5] uppercase mb-1.5">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+                required
+                className="w-full bg-[#071C15] border border-[#15533D] focus:border-[#1C6B4D] text-[#E2F1E7] px-4 py-2.5 rounded text-sm outline-none transition-colors placeholder-[#62907A]"
+              />
+            </div>
+          )}
+
           {/* Action Button */}
           <button
             type="submit"
-            disabled={submitting || !verifiedProfile}
+            disabled={submitting || (mode === 'join' && (!verifiedProfile || !password || password !== confirmPassword))}
             className="w-full py-3.5 bg-[#15533D] hover:bg-[#1C6B4D] text-[#E2F1E7] font-bold tracking-widest text-sm uppercase rounded border border-[#1C6B4D] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
           >
             {submitting ? 'PROCESSING...' : mode === 'join' ? 'JOIN CLUB' : 'LOGIN TO CLUB'}
