@@ -1,6 +1,23 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Coffee, Github, Lock, User, ArrowRight, AlertCircle, CheckCircle2, Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react';
+import { 
+  Coffee, 
+  Github, 
+  Lock, 
+  User, 
+  ArrowRight, 
+  AlertCircle, 
+  CheckCircle2, 
+  Eye, 
+  EyeOff, 
+  KeyRound, 
+  ShieldCheck,
+  Zap,
+  Users,
+  Code2,
+  TrendingUp,
+  Trophy
+} from 'lucide-react';
 
 export default function AuthPage() {
   const [viewMode, setViewMode] = useState('login'); // 'login' | 'register' | 'forgot'
@@ -93,7 +110,7 @@ export default function AuthPage() {
 
     setLoading(true);
     try {
-      const res = await register({
+      await register({
         name: cleanName,
         githubUrl: cleanGithub,
         password: regPassword
@@ -136,353 +153,441 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-center items-center px-4 py-8 sm:px-6 sm:py-12 bg-[#04110C] text-emerald-50 selection:bg-emerald-500 selection:text-emerald-950">
+    <div className="min-h-screen w-full flex flex-col justify-center items-center px-4 py-8 sm:py-12 bg-[#04110C] text-emerald-50 selection:bg-emerald-500 selection:text-emerald-950 relative overflow-hidden">
       
       {/* Background Depth Accent */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-600/5 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-emerald-900/10 blur-[100px] rounded-full"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-emerald-500/5 blur-[130px] rounded-full"></div>
+        <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-emerald-900/10 blur-[120px] rounded-full"></div>
       </div>
 
-      <div className="w-full max-w-[440px] z-10 my-auto animate-fade-in">
+      <div className="w-full max-w-[1200px] z-10 flex items-center justify-center my-auto">
         
-        {/* Header Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#071A12] border border-[#123326] shadow-lg shadow-emerald-950/60 mb-4 text-emerald-400">
-            <Coffee className="w-6 h-6" />
+        {/* Left Feature Badges (Desktop) */}
+        <div className="hidden xl:flex flex-col gap-8 w-64 pr-8">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#071A12] border border-[#16382A] text-emerald-400 shrink-0">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Track</h3>
+              <p className="text-xs text-emerald-400/70 mt-0.5 leading-relaxed">Your daily GitHub commit activity</p>
+            </div>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-mono text-emerald-50 uppercase">
-            Daily Commit Club
-          </h1>
-          <p className="mt-1.5 text-xs sm:text-sm text-emerald-300/70 font-sans">
-            Private developer accountability.
-          </p>
-          <p className="mt-0.5 text-[11px] text-emerald-400/50 font-sans">
-            Miss a daily commit, owe coffee.
-          </p>
+
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#071A12] border border-[#16382A] text-emerald-400 shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Stay Accountable</h3>
+              <p className="text-xs text-emerald-400/70 mt-0.5 leading-relaxed">Together with club developers</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#071A12] border border-[#16382A] text-amber-400 shrink-0">
+              <Coffee className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Owe Coffee</h3>
+              <p className="text-xs text-emerald-400/70 mt-0.5 leading-relaxed">Miss a commit, owe the club</p>
+            </div>
+          </div>
         </div>
 
-        {/* Main Authentication Card */}
-        <div className="bg-[#071A12] border border-[#123326] rounded-2xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/50 backdrop-blur-sm">
+        {/* Center Main Card & Branding */}
+        <div className="w-full max-w-[440px] flex flex-col items-center animate-fade-in">
           
-          {/* Segmented Control Tabs */}
-          {viewMode !== 'forgot' && (
-            <div className="grid grid-cols-2 p-1 bg-[#04110C] border border-[#123326] rounded-xl mb-6">
-              <button
-                type="button"
-                id="tab-signin"
-                onClick={() => handleSwitchMode('login')}
-                className={`py-2.5 text-xs font-semibold rounded-lg transition-all font-mono cursor-pointer ${
-                  viewMode === 'login'
-                    ? 'bg-[#123326] text-emerald-100 shadow-sm border border-emerald-700/30'
-                    : 'text-emerald-400/60 hover:text-emerald-200'
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                id="tab-join"
-                onClick={() => handleSwitchMode('register')}
-                className={`py-2.5 text-xs font-semibold rounded-lg transition-all font-mono cursor-pointer ${
-                  viewMode === 'register'
-                    ? 'bg-[#123326] text-emerald-100 shadow-sm border border-emerald-700/30'
-                    : 'text-emerald-400/60 hover:text-emerald-200'
-                }`}
-              >
-                Join Club
-              </button>
+          {/* Header Branding */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#071A12] border border-[#16382A] shadow-lg shadow-emerald-950/70 mb-3.5 text-emerald-400">
+              <Coffee className="w-6 h-6" />
             </div>
-          )}
+            <h1 className="text-2xl font-extrabold tracking-tight text-white uppercase font-sans">
+              DAILY COMMIT CLUB
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-emerald-300/80 font-sans">
+              Private developer accountability.
+            </p>
+            <p className="mt-0.5 text-xs text-emerald-400/60 font-sans">
+              Miss a daily commit, owe coffee.
+            </p>
+          </div>
 
-          {/* Feedback Badges */}
-          {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-950/40 border border-red-800/50 flex items-start gap-3 text-red-300 text-xs font-medium animate-fade-in">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <span className="leading-relaxed">{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-5 p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-600/40 flex items-start gap-3 text-emerald-200 text-xs font-medium animate-fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <span className="leading-relaxed">{success}</span>
-            </div>
-          )}
-
-          {/* MODE 1: SIGN IN */}
-          {viewMode === 'login' && (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              
-              <div>
-                <label htmlFor="login-identifier" className="block text-xs font-medium text-emerald-300/90 mb-1.5">
-                  Name or GitHub username
-                </label>
-                <div className="relative flex items-center">
-                  <User className="w-4 h-4 text-emerald-500/50 absolute left-3.5 pointer-events-none" />
-                  <input
-                    id="login-identifier"
-                    type="text"
-                    required
-                    placeholder="e.g. alex-dev or Alex Rivers"
-                    value={loginIdentifier}
-                    onChange={(e) => setLoginIdentifier(e.target.value)}
-                    className="w-full h-11 sm:h-12 bg-[#04110C] border border-[#123326] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-xs sm:text-sm rounded-xl pl-10 pr-4 transition-all font-sans outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="login-password" className="block text-xs font-medium text-emerald-300/90">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchMode('forgot')}
-                    className="text-xs text-emerald-400/80 hover:text-emerald-200 font-sans cursor-pointer transition-colors"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative flex items-center">
-                  <Lock className="w-4 h-4 text-emerald-500/50 absolute left-3.5 pointer-events-none" />
-                  <input
-                    id="login-password"
-                    type={showLoginPassword ? "text" : "password"}
-                    required
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full h-11 sm:h-12 bg-[#04110C] border border-[#123326] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-xs sm:text-sm rounded-xl pl-10 pr-10 transition-all font-sans outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    className="absolute right-3 p-1 text-emerald-500/50 hover:text-emerald-300 rounded transition-colors focus:outline-none"
-                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
-                  >
-                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 sm:h-12 mt-2 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-xs sm:text-sm tracking-wide rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {loading ? (
-                  <span className="inline-flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-emerald-950 border-t-transparent rounded-full animate-spin"></div>
-                    Signing in...
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span>Sign In</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </span>
-                )}
-              </button>
-
-              <div className="mt-6 text-center pt-4 border-t border-[#123326]/60">
-                <span className="text-xs text-emerald-400/60 font-sans">Don't have an account? </span>
+          {/* Main Authentication Card */}
+          <div className="w-full bg-[#071A12] border border-[#16382A] rounded-2xl shadow-2xl shadow-emerald-950/60 overflow-hidden">
+            
+            {/* Top Tabs */}
+            {viewMode !== 'forgot' && (
+              <div className="grid grid-cols-2 border-b border-[#16382A]">
                 <button
                   type="button"
+                  id="tab-signin"
+                  onClick={() => handleSwitchMode('login')}
+                  className={`h-13 flex items-center justify-center text-sm font-bold transition-all relative cursor-pointer ${
+                    viewMode === 'login'
+                      ? 'text-emerald-100'
+                      : 'text-emerald-400/60 hover:text-emerald-200'
+                  }`}
+                >
+                  <span>Sign In</span>
+                  {viewMode === 'login' && (
+                    <div className="absolute bottom-0 inset-x-0 h-0.5 bg-emerald-500 rounded-full" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  id="tab-join"
                   onClick={() => handleSwitchMode('register')}
-                  className="text-xs text-emerald-400 font-semibold hover:text-emerald-200 underline ml-1 cursor-pointer transition-colors font-sans"
+                  className={`h-13 flex items-center justify-center text-sm font-bold transition-all relative cursor-pointer ${
+                    viewMode === 'register'
+                      ? 'text-emerald-100'
+                      : 'text-emerald-400/60 hover:text-emerald-200'
+                  }`}
                 >
-                  Join Club
+                  <span>Join Club</span>
+                  {viewMode === 'register' && (
+                    <div className="absolute bottom-0 inset-x-0 h-0.5 bg-emerald-500 rounded-full" />
+                  )}
                 </button>
               </div>
+            )}
 
-            </form>
-          )}
-
-          {/* MODE 2: JOIN CLUB (REGISTER) */}
-          {viewMode === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+            {/* Form Body */}
+            <div className="p-6 sm:p-8">
               
-              <div>
-                <label htmlFor="reg-name" className="block text-xs font-medium text-emerald-300/90 mb-1.5">
-                  Full Name
-                </label>
-                <div className="relative flex items-center">
-                  <User className="w-4 h-4 text-emerald-500/50 absolute left-3.5 pointer-events-none" />
-                  <input
-                    id="reg-name"
-                    type="text"
-                    required
-                    placeholder="Alex Rivers"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                    className="w-full h-11 sm:h-12 bg-[#04110C] border border-[#123326] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-xs sm:text-sm rounded-xl pl-10 pr-4 transition-all font-sans outline-none"
-                  />
+              {/* Feedback Alerts */}
+              {error && (
+                <div className="mb-5 p-3.5 rounded-xl bg-red-950/40 border border-red-800/50 flex items-start gap-3 text-red-300 text-xs font-medium animate-fade-in">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{error}</span>
                 </div>
-              </div>
+              )}
 
-              <div>
-                <label htmlFor="reg-github" className="block text-xs font-medium text-emerald-300/90 mb-1.5">
-                  GitHub Profile URL
-                </label>
-                <div className="relative flex items-center">
-                  <Github className="w-4 h-4 text-emerald-500/50 absolute left-3.5 pointer-events-none" />
-                  <input
-                    id="reg-github"
-                    type="text"
-                    required
-                    placeholder="https://github.com/alexrivers"
-                    value={regGithubUrl}
-                    onChange={(e) => setRegGithubUrl(e.target.value)}
-                    className="w-full h-11 sm:h-12 bg-[#04110C] border border-[#123326] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-xs sm:text-sm rounded-xl pl-10 pr-4 transition-all font-sans outline-none"
-                  />
+              {success && (
+                <div className="mb-5 p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-600/40 flex items-start gap-3 text-emerald-200 text-xs font-medium animate-fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{success}</span>
                 </div>
-              </div>
+              )}
 
-              <div>
-                <label htmlFor="reg-password" className="block text-xs font-medium text-emerald-300/90 mb-1.5">
-                  Password
-                </label>
-                <div className="relative flex items-center">
-                  <Lock className="w-4 h-4 text-emerald-500/50 absolute left-3.5 pointer-events-none" />
-                  <input
-                    id="reg-password"
-                    type={showRegPassword ? "text" : "password"}
-                    required
-                    placeholder="••••••••"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    className="w-full h-11 sm:h-12 bg-[#04110C] border border-[#123326] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-xs sm:text-sm rounded-xl pl-10 pr-10 transition-all font-sans outline-none"
-                  />
+              {/* MODE 1: SIGN IN */}
+              {viewMode === 'login' && (
+                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                  
+                  <div>
+                    <label htmlFor="login-identifier" className="block text-xs font-medium text-emerald-300/90 mb-2">
+                      Name or GitHub username
+                    </label>
+                    <div className="relative flex items-center">
+                      <User className="w-4 h-4 text-emerald-500/50 absolute left-4 pointer-events-none" />
+                      <input
+                        id="login-identifier"
+                        type="text"
+                        required
+                        placeholder="e.g. HARI"
+                        value={loginIdentifier}
+                        onChange={(e) => setLoginIdentifier(e.target.value)}
+                        className="w-full h-[52px] bg-[#05170f] border border-[#16382A] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-sm rounded-xl pl-11 pr-4 transition-all outline-none font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label htmlFor="login-password" className="block text-xs font-medium text-emerald-300/90">
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleSwitchMode('forgot')}
+                        className="text-xs text-emerald-400 hover:text-emerald-200 hover:underline font-sans cursor-pointer transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative flex items-center">
+                      <Lock className="w-4 h-4 text-emerald-500/50 absolute left-4 pointer-events-none" />
+                      <input
+                        id="login-password"
+                        type={showLoginPassword ? "text" : "password"}
+                        required
+                        placeholder="••••••••"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="w-full h-[52px] bg-[#05170f] border border-[#16382A] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-sm rounded-xl pl-11 pr-11 transition-all outline-none font-sans"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-4 p-1 text-emerald-500/60 hover:text-emerald-300 rounded transition-colors focus:outline-none cursor-pointer"
+                        aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                      >
+                        {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setShowRegPassword(!showRegPassword)}
-                    className="absolute right-3 p-1 text-emerald-500/50 hover:text-emerald-300 rounded transition-colors focus:outline-none"
-                    aria-label={showRegPassword ? "Hide password" : "Show password"}
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-[52px] mt-6 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-sm tracking-wide rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {loading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-emerald-950 border-t-transparent rounded-full animate-spin"></div>
+                        Signing in...
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>Sign In</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </span>
+                    )}
                   </button>
-                </div>
-              </div>
 
-              <div>
-                <label htmlFor="reg-confirm-password" className="block text-xs font-medium text-emerald-300/90 mb-1.5">
-                  Confirm Password
-                </label>
-                <div className="relative flex items-center">
-                  <Lock className="w-4 h-4 text-emerald-500/50 absolute left-3.5 pointer-events-none" />
-                  <input
-                    id="reg-confirm-password"
-                    type={showRegConfirmPassword ? "text" : "password"}
-                    required
-                    placeholder="••••••••"
-                    value={regConfirmPassword}
-                    onChange={(e) => setRegConfirmPassword(e.target.value)}
-                    className="w-full h-11 sm:h-12 bg-[#04110C] border border-[#123326] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-xs sm:text-sm rounded-xl pl-10 pr-10 transition-all font-sans outline-none"
-                  />
+                  <div className="mt-5 text-center">
+                    <span className="text-xs text-emerald-400/70 font-sans">Don't have an account? </span>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchMode('register')}
+                      className="text-xs text-emerald-400 font-bold hover:text-emerald-200 underline ml-1 cursor-pointer transition-colors font-sans"
+                    >
+                      Join Club
+                    </button>
+                  </div>
+
+                </form>
+              )}
+
+              {/* MODE 2: JOIN CLUB (REGISTER) */}
+              {viewMode === 'register' && (
+                <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                  
+                  <div>
+                    <label htmlFor="reg-name" className="block text-xs font-medium text-emerald-300/90 mb-2">
+                      Full Name
+                    </label>
+                    <div className="relative flex items-center">
+                      <User className="w-4 h-4 text-emerald-500/50 absolute left-4 pointer-events-none" />
+                      <input
+                        id="reg-name"
+                        type="text"
+                        required
+                        placeholder="e.g. HARI"
+                        value={regName}
+                        onChange={(e) => setRegName(e.target.value)}
+                        className="w-full h-[52px] bg-[#05170f] border border-[#16382A] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-sm rounded-xl pl-11 pr-4 transition-all outline-none font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-github" className="block text-xs font-medium text-emerald-300/90 mb-2">
+                      GitHub Profile URL
+                    </label>
+                    <div className="relative flex items-center">
+                      <Github className="w-4 h-4 text-emerald-500/50 absolute left-4 pointer-events-none" />
+                      <input
+                        id="reg-github"
+                        type="text"
+                        required
+                        placeholder="https://github.com/tamilselvam5884771-alt"
+                        value={regGithubUrl}
+                        onChange={(e) => setRegGithubUrl(e.target.value)}
+                        className="w-full h-[52px] bg-[#05170f] border border-[#16382A] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-sm rounded-xl pl-11 pr-4 transition-all outline-none font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-password" className="block text-xs font-medium text-emerald-300/90 mb-2">
+                      Password
+                    </label>
+                    <div className="relative flex items-center">
+                      <Lock className="w-4 h-4 text-emerald-500/50 absolute left-4 pointer-events-none" />
+                      <input
+                        id="reg-password"
+                        type={showRegPassword ? "text" : "password"}
+                        required
+                        placeholder="••••••••"
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        className="w-full h-[52px] bg-[#05170f] border border-[#16382A] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-sm rounded-xl pl-11 pr-11 transition-all outline-none font-sans"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPassword(!showRegPassword)}
+                        className="absolute right-4 p-1 text-emerald-500/60 hover:text-emerald-300 rounded transition-colors focus:outline-none cursor-pointer"
+                        aria-label={showRegPassword ? "Hide password" : "Show password"}
+                      >
+                        {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-confirm-password" className="block text-xs font-medium text-emerald-300/90 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative flex items-center">
+                      <Lock className="w-4 h-4 text-emerald-500/50 absolute left-4 pointer-events-none" />
+                      <input
+                        id="reg-confirm-password"
+                        type={showRegConfirmPassword ? "text" : "password"}
+                        required
+                        placeholder="••••••••"
+                        value={regConfirmPassword}
+                        onChange={(e) => setRegConfirmPassword(e.target.value)}
+                        className="w-full h-[52px] bg-[#05170f] border border-[#16382A] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-sm rounded-xl pl-11 pr-11 transition-all outline-none font-sans"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                        className="absolute right-4 p-1 text-emerald-500/60 hover:text-emerald-300 rounded transition-colors focus:outline-none cursor-pointer"
+                        aria-label={showRegConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                      >
+                        {showRegConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
-                    className="absolute right-3 p-1 text-emerald-500/50 hover:text-emerald-300 rounded transition-colors focus:outline-none"
-                    aria-label={showRegConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-[52px] mt-6 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-sm tracking-wide rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    {showRegConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {loading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-emerald-950 border-t-transparent rounded-full animate-spin"></div>
+                        Creating Account...
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>Create Account</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </span>
+                    )}
                   </button>
-                </div>
+
+                  <div className="mt-5 text-center">
+                    <span className="text-xs text-emerald-400/70 font-sans">Already have an account? </span>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchMode('login')}
+                      className="text-xs text-emerald-400 font-bold hover:text-emerald-200 underline ml-1 cursor-pointer transition-colors font-sans"
+                    >
+                      Sign In
+                    </button>
+                  </div>
+
+                </form>
+              )}
+
+              {/* MODE 3: FORGOT PASSWORD */}
+              {viewMode === 'forgot' && (
+                <form onSubmit={handleForgotSubmit} className="space-y-4">
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#05170f] border border-[#16382A] mb-3 text-emerald-400">
+                      <KeyRound className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-base font-bold text-white font-sans">Reset Password</h2>
+                    <p className="text-xs text-emerald-300/70 mt-1 font-sans">
+                      Enter your Name or GitHub username to request a reset link.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="forgot-identifier" className="block text-xs font-medium text-emerald-300/90 mb-2">
+                      Name or GitHub username
+                    </label>
+                    <div className="relative flex items-center">
+                      <User className="w-4 h-4 text-emerald-500/50 absolute left-4 pointer-events-none" />
+                      <input
+                        id="forgot-identifier"
+                        type="text"
+                        required
+                        placeholder="e.g. HARI"
+                        value={forgotIdentifier}
+                        onChange={(e) => setForgotIdentifier(e.target.value)}
+                        className="w-full h-[52px] bg-[#05170f] border border-[#16382A] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-sm rounded-xl pl-11 pr-4 transition-all outline-none font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-[52px] mt-6 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-sm tracking-wide rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {loading ? 'Requesting Reset...' : 'Request Password Reset'}
+                  </button>
+
+                  <div className="mt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchMode('login')}
+                      className="text-xs text-emerald-400/80 hover:text-emerald-200 underline cursor-pointer transition-colors font-sans"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Security Note Footer */}
+              <div className="mt-6 pt-4 border-t border-[#16382A]/70 flex items-center justify-center gap-2 text-xs font-mono text-emerald-500/60">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Protected by Supabase Auth</span>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 sm:h-12 mt-2 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-xs sm:text-sm tracking-wide rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {loading ? (
-                  <span className="inline-flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-emerald-950 border-t-transparent rounded-full animate-spin"></div>
-                    Creating Account...
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span>Create Account</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </span>
-                )}
-              </button>
+            </div>
 
-              <div className="mt-6 text-center pt-4 border-t border-[#123326]/60">
-                <span className="text-xs text-emerald-400/60 font-sans">Already have an account? </span>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchMode('login')}
-                  className="text-xs text-emerald-400 font-semibold hover:text-emerald-200 underline ml-1 cursor-pointer transition-colors font-sans"
-                >
-                  Sign In
-                </button>
-              </div>
+          </div>
 
-            </form>
-          )}
-
-          {/* MODE 3: FORGOT PASSWORD */}
-          {viewMode === 'forgot' && (
-            <form onSubmit={handleForgotSubmit} className="space-y-4">
-              <div className="text-center mb-4">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#04110C] border border-[#123326] mb-3 text-emerald-400">
-                  <KeyRound className="w-5 h-5" />
-                </div>
-                <h2 className="text-sm sm:text-base font-bold text-emerald-100 font-sans">Reset Password</h2>
-                <p className="text-xs text-emerald-300/70 mt-1 font-sans">
-                  Enter your Name or GitHub username to request a reset link.
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="forgot-identifier" className="block text-xs font-medium text-emerald-300/90 mb-1.5">
-                  Name or GitHub username
-                </label>
-                <div className="relative flex items-center">
-                  <User className="w-4 h-4 text-emerald-500/50 absolute left-3.5 pointer-events-none" />
-                  <input
-                    id="forgot-identifier"
-                    type="text"
-                    required
-                    placeholder="e.g. alex-dev or Alex Rivers"
-                    value={forgotIdentifier}
-                    onChange={(e) => setForgotIdentifier(e.target.value)}
-                    className="w-full h-11 sm:h-12 bg-[#04110C] border border-[#123326] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-100 placeholder-emerald-700/60 text-xs sm:text-sm rounded-xl pl-10 pr-4 transition-all font-sans outline-none"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 sm:h-12 mt-2 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold text-xs sm:text-sm tracking-wide rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {loading ? 'Requesting Reset...' : 'Request Password Reset'}
-              </button>
-
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => handleSwitchMode('login')}
-                  className="text-xs text-emerald-400/80 hover:text-emerald-200 font-mono underline cursor-pointer transition-colors"
-                >
-                  ← Back to Sign In
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Security Note Footer */}
-          <div className="mt-6 text-center border-t border-[#123326]/60 pt-4 flex items-center justify-center gap-1.5 text-[11px] text-emerald-500/50 font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/60" />
-            <span>Protected by Supabase Auth</span>
+          {/* Bottom Branding Tagline */}
+          <div className="mt-8 text-center text-[11px] font-mono tracking-widest text-emerald-500/40 uppercase">
+            ── FOR DEVELOPERS • BY DEVELOPERS ──
           </div>
 
         </div>
+
+        {/* Right Feature Badges (Desktop) */}
+        <div className="hidden xl:flex flex-col gap-8 w-64 pl-8">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#071A12] border border-[#16382A] text-emerald-400 shrink-0">
+              <Code2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Build Habit</h3>
+              <p className="text-xs text-emerald-400/70 mt-0.5 leading-relaxed">Small commits create big progress</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#071A12] border border-[#16382A] text-emerald-400 shrink-0">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Track Growth</h3>
+              <p className="text-xs text-emerald-400/70 mt-0.5 leading-relaxed">See your streak and activity</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#071A12] border border-[#16382A] text-emerald-400 shrink-0">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Join the Club</h3>
+              <p className="text-xs text-emerald-400/70 mt-0.5 leading-relaxed">Be part of a supportive community</p>
+            </div>
+          </div>
+        </div>
+
       </div>
+
     </div>
   );
 }
-
