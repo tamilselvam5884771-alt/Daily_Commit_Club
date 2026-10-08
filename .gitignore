@@ -1,0 +1,31 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Node modules & build output
+node_modules/
+dist/
+dist-ssr/
+frontend/node_modules/
+frontend/dist/
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables (Never commit real secrets!)
+.env
+.env.production
+.env.development
+frontend/.env
+frontend/.env.production
+frontend/.env.development
