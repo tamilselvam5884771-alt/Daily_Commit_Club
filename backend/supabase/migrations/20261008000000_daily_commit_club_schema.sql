@@ -236,3 +236,77 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_login_email(TEXT) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION public.apply_user_daily_check(UUID, DATE, TEXT, INT, TEXT, TIMESTAMPTZ) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION public.generate_daily_commit_reminders() TO authenticated, anon;
+
+-- 4. AUTH TRIGGERS FOR AUTO EMAIL CONFIRMATION AND PROFILE CREATION
+CREATE OR REPLACE FUNCTION public.handle_new_user_before()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+BEGIN
+  NEW.email_confirmed_at := NOW();
+  NEW.confirmed_at := NOW();
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user_after()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_name TEXT;
+  v_username TEXT;
+  v_url TEXT;
+  v_avatar TEXT;
+BEGIN
+  v_name := COALESCE(NEW.raw_user_meta_data->>'full_name', 'Member');
+  v_username := COALESCE(NEW.raw_user_meta_data->>'github_username', SPLIT_PART(NEW.email, '@', 1));
+  v_url := COALESCE(NEW.raw_user_meta_data->>'github_url', 'https://github.com/' || v_username);
+  v_avatar := COALESCE(NEW.raw_user_meta_data->>'github_avatar_url', 'https://github.com/' || v_username || '.png');
+
+  INSERT INTO public.profiles (
+    id,
+    name,
+    github_url,
+    github_username,
+    github_avatar_url,
+    internal_email,
+    current_streak,
+    longest_streak,
+    coffee_debt
+  ) VALUES (
+    NEW.id,
+    v_name,
+    v_url,
+    v_username,
+    v_avatar,
+    NEW.email,
+    0,
+    0,
+    0
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    github_url = EXCLUDED.github_url,
+    github_username = EXCLUDED.github_username,
+    github_avatar_url = EXCLUDED.github_avatar_url,
+    internal_email = EXCLUDED.internal_email;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_before ON auth.users;
+CREATE TRIGGER on_auth_user_created_before
+  BEFORE INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_before();
+
+DROP TRIGGER IF EXISTS on_auth_user_created_after ON auth.users;
+CREATE TRIGGER on_auth_user_created_after
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_after();
+

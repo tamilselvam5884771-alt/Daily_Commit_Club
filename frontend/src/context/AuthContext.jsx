@@ -78,12 +78,13 @@ export const AuthProvider = ({ children }) => {
     }
     // Remove query params or trailing slashes
     clean = clean.split('?')[0].split('/')[0];
-    return clean.trim();
+    return clean.trim().replace(/^@/, '');
   };
 
   // Helper to generate deterministic, RFC-valid internal email
   const generateInternalEmail = (githubUsername) => {
-    const cleanUser = githubUsername.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!githubUsername) return '';
+    const cleanUser = githubUsername.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
     return `dcc_${cleanUser}@gmail.com`;
   };
 
@@ -119,7 +120,9 @@ export const AuthProvider = ({ children }) => {
       options: {
         data: {
           full_name: rawName,
-          github_username: username
+          github_username: username,
+          github_url: formattedGithubUrl,
+          github_avatar_url: avatarUrl
         }
       }
     });
@@ -129,17 +132,31 @@ export const AuthProvider = ({ children }) => {
         throw new Error('An account with this GitHub profile already exists. Please sign in.');
       }
       if (authError.status === 429 || authError.message?.toLowerCase().includes('rate limit')) {
-        // Fallback: If signup triggered email rate limit, attempt sign in or notify user
-        throw new Error('Supabase email rate limit reached. If your account was already created, please try signing in.');
+        throw new Error('Too many attempts. If your account was already created, please try signing in.');
       }
-      throw new Error(authError.message);
+      throw new Error(authError.message || 'Unable to create your account. Please check your details and try again.');
     }
 
     if (!authData.user) {
       throw new Error('Registration failed to return user data. Please try again.');
     }
 
-    // Upsert profile into public.profiles
+    let activeSession = authData.session;
+
+    // If session was not returned directly by signUp, log in immediately
+    if (!activeSession) {
+      const { data: loginData, error: loginErr } = await supabase.auth.signInWithPassword({
+        email: internalEmail,
+        password: password
+      });
+      if (loginErr) {
+        console.warn('Auto sign-in after registration warning:', loginErr);
+      } else {
+        activeSession = loginData?.session;
+      }
+    }
+
+    // Upsert profile into public.profiles as fallback/enhancement
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: authData.user.id,
       name: rawName,
@@ -157,8 +174,8 @@ export const AuthProvider = ({ children }) => {
     }
 
     setUser(authData.user);
-    await fetchProfile(authData.user.id);
-    return { user: authData.user, session: authData.session };
+    const updatedProfile = await fetchProfile(authData.user.id);
+    return { user: authData.user, session: activeSession, profile: updatedProfile };
   };
 
   // Login flow by Name / Username
@@ -216,6 +233,9 @@ export const AuthProvider = ({ children }) => {
     });
 
     if (resetErr) {
+      if (resetErr.status === 429 || resetErr.message?.toLowerCase().includes('rate limit')) {
+        throw new Error('Email rate limit reached for password resets. Please wait a few minutes before trying again.');
+      }
       throw new Error(resetErr.message || 'Password reset request failed.');
     }
 
