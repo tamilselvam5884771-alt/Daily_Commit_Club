@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Coffee, AlertCircle, CheckCircle, ExternalLink, RefreshCw, Trophy, Flame } from 'lucide-react';
+import { Coffee, AlertCircle, CheckCircle, ExternalLink, RefreshCw, Github } from 'lucide-react';
 
 export default function CoffeePage() {
   const { profile } = useAuth();
@@ -17,6 +17,7 @@ export default function CoffeePage() {
       const { data, error: fetchErr } = await supabase
         .from('profiles')
         .select('*')
+        .not('github_username', 'is', null)
         .gt('coffee_debt', 0)
         .order('coffee_debt', { ascending: false });
 
@@ -40,165 +41,154 @@ export default function CoffeePage() {
   const userDebt = profile?.coffee_debt || 0;
 
   return (
-    <div className="page-container space-y-6 sm:space-y-8 animate-fade-in text-emerald-50">
+    <div className="page-container space-y-6">
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-900/40 pb-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-semibold text-amber-400 uppercase tracking-wider mb-1">
-              <Coffee className="w-4 h-4 text-amber-400" />
-              <span>Coffee Accountability</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-emerald-50 tracking-tight">
-              Coffee Debt Roster
-            </h1>
-            <p className="text-sm text-emerald-300/70 mt-1">
-              Missed commits have consequences. Here are the club members who owe coffee. ☕
-            </p>
-          </div>
-
-          <button
-            onClick={fetchCoffeeDebts}
-            disabled={loading}
-            className="club-button-secondary py-2.5 px-4 text-xs shrink-0 self-start sm:self-auto"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Roster</span>
-          </button>
-        </div>
-
-        {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          
-          <div className="club-card p-6 border-amber-500/40 bg-gradient-to-br from-amber-950/30 to-emerald-950/60">
-            <div className="flex items-center justify-between text-amber-400/80 mb-2">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider">Total Group Debt</span>
-              <Coffee className="w-5 h-5 text-amber-400" />
-            </div>
-            <div className="text-3xl font-extrabold text-amber-400 font-mono">
-              {totalCoffees} <span className="text-base font-normal text-amber-300/70">coffees</span>
-            </div>
-            <p className="text-xs text-emerald-400/60 mt-1">Total coffees owed across all members</p>
-          </div>
-
-          <div className="club-card p-6">
-            <div className="flex items-center justify-between text-emerald-400/70 mb-2">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider">Debtors Count</span>
-              <AlertCircle className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div className="text-3xl font-extrabold text-emerald-100 font-mono">
-              {debtorCount} <span className="text-base font-normal text-emerald-400/70">members</span>
-            </div>
-            <p className="text-xs text-emerald-400/60 mt-1">Members with active coffee debt</p>
-          </div>
-
-          <div className="club-card p-6 border-emerald-500/30">
-            <div className="flex items-center justify-between text-emerald-400/70 mb-2">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider">Your Debt</span>
-              <Coffee className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div className="text-3xl font-extrabold text-amber-400 font-mono">
-              {userDebt} <span className="text-base font-normal text-amber-300/70">coffees</span>
-            </div>
-            <p className="text-xs text-emerald-400/60 mt-1">
-              {userDebt === 0 ? "You're clean! Keep committing 🎉" : "You owe coffee to the club!"}
-            </p>
-          </div>
-
-        </div>
-
-        {/* DEBTORS LIST */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-emerald-100 flex items-center gap-2 border-b border-emerald-900/40 pb-2">
+      {/* 1. Header */}
+      <section className="dashboard-header">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-mono font-semibold text-amber-400 uppercase tracking-wider mb-1">
             <Coffee className="w-4 h-4 text-amber-400" />
-            Current Debtors ({debtorCount})
-          </h2>
-
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="club-card p-5 animate-pulse h-20 bg-emerald-950/40"></div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="club-card p-8 text-center text-red-300 bg-red-950/30">
-              <p>{error}</p>
-            </div>
-          ) : debtors.length === 0 ? (
-            <div className="club-card p-12 text-center space-y-3 border-emerald-500/30 bg-emerald-950/40">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-400">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-emerald-100">No Coffee Debtors!</h3>
-              <p className="text-xs text-emerald-300/70 max-w-sm mx-auto">
-                Everyone in the club is currently clean. All members have kept up with their daily commitments!
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {debtors.map(debtor => (
-                <div 
-                  key={debtor.id}
-                  className="club-card p-5 flex items-center justify-between gap-4 border-amber-500/30 bg-gradient-to-r from-amber-950/20 via-emerald-950/40 to-emerald-950/40"
-                >
-                  <div className="flex items-center gap-4">
-                    {debtor.github_avatar_url ? (
-                      <img 
-                        src={debtor.github_avatar_url} 
-                        alt={debtor.name} 
-                        className="w-12 h-12 min-w-[48px] min-h-[48px] max-w-[48px] max-h-[48px] rounded-full object-cover border-2 border-amber-500/40 shadow-md"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-amber-900/60 border border-amber-700 flex items-center justify-center font-bold text-amber-100 text-base">
-                        {debtor.name?.[0] || 'D'}
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="text-base font-bold text-emerald-50 flex items-center gap-2">
-                        {debtor.name}
-                        {debtor.id === profile?.id && (
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-800 text-emerald-200 font-mono">You</span>
-                        )}
-                      </h3>
-                      <a 
-                        href={debtor.github_url || `https://github.com/${debtor.github_username}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-mono text-emerald-400/70 hover:text-emerald-200 inline-flex items-center gap-1"
-                      >
-                        @{debtor.github_username}
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-6">
-                    <div className="text-right font-mono">
-                      <span className="text-xl font-extrabold text-amber-400 block">
-                        ☕ {debtor.coffee_debt}
-                      </span>
-                      <span className="text-[10px] text-emerald-500/70 uppercase">
-                        {debtor.coffee_debt === 1 ? '1 Coffee Owed' : `${debtor.coffee_debt} Coffees Owed`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-        </div>
-
-        {/* RULE CALLOUT */}
-        <div className="p-5 rounded-xl bg-emerald-950/60 border border-emerald-800/50 text-xs text-emerald-300/70 space-y-1 font-mono">
-          <div className="font-bold text-emerald-200 flex items-center gap-2">
-            <Coffee className="w-4 h-4 text-amber-400" />
-            Daily Commit Club Rule #1
+            <span>Coffee Accountability</span>
           </div>
-          <p>
-            Each missed day at 8:00 PM IST increments your coffee debt by exactly 1 coffee. Debts persist until settled with club members!
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Coffee Debt Roster
+          </h1>
+          <p className="text-xs sm:text-sm text-emerald-400/80 mt-1 font-mono">
+            Missed daily commits incur club coffee debt. Keep committing to stay clear! ☕
           </p>
         </div>
+
+        <button
+          onClick={fetchCoffeeDebts}
+          disabled={loading}
+          className="btn-secondary self-start sm:self-auto"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? 'animate-spin' : ''}`} />
+          <span>Refresh Roster</span>
+        </button>
+      </section>
+
+      {/* 2. Summary Cards (3 Equal Cards) */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        
+        <div className="card flex flex-col justify-between">
+          <div className="flex items-center justify-between text-amber-400 mb-2">
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-300/80">Group Coffee Debt</span>
+            <Coffee className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="my-2">
+            <div className="text-3xl sm:text-4xl font-extrabold text-amber-400 font-mono">
+              {totalCoffees} <span className="text-base font-normal text-amber-400/80">coffees</span>
+            </div>
+            <div className="text-xs text-emerald-400/70 mt-1 font-mono">
+              Total owed across all members
+            </div>
+          </div>
+        </div>
+
+        <div className="card flex flex-col justify-between">
+          <div className="flex items-center justify-between text-emerald-400 mb-2">
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-300/80">Active Debtors</span>
+            <AlertCircle className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="my-2">
+            <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
+              {debtorCount} <span className="text-base font-normal text-emerald-400/80">members</span>
+            </div>
+            <div className="text-xs text-emerald-400/70 mt-1 font-mono">
+              Members with outstanding debt
+            </div>
+          </div>
+        </div>
+
+        <div className="card flex flex-col justify-between">
+          <div className="flex items-center justify-between text-amber-400 mb-2">
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-300/80">Your Coffee Debt</span>
+            <Coffee className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="my-2">
+            <div className="text-3xl sm:text-4xl font-extrabold text-amber-400 font-mono">
+              {userDebt} <span className="text-base font-normal text-amber-400/80">coffees</span>
+            </div>
+            <div className="text-xs text-emerald-400/70 mt-1 font-mono">
+              {userDebt === 0 ? "You're clean! Keep committing 🎉" : "Owed to club members"}
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      {/* 3. Debtors List / Polished Empty State */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <Coffee className="w-4 h-4 text-amber-400" />
+          <span>Members Who Owe Coffee ({debtorCount})</span>
+        </h2>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2].map(i => (
+              <div key={i} className="card p-6 animate-pulse h-20"></div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="card p-8 text-center text-red-300">
+            <p className="text-sm font-semibold">{error}</p>
+          </div>
+        ) : debtors.length === 0 ? (
+          <div className="card flex flex-col items-center justify-center text-center py-12 px-6 space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 text-2xl mb-1">
+              ☕
+            </div>
+            <h3 className="text-xl font-bold text-white">No Coffee Debt</h3>
+            <p className="text-sm text-emerald-300/70 max-w-md">
+              Everyone is clear today. All active members have maintained their daily commitment!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {debtors.map(debtor => (
+              <div key={debtor.id} className="card flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 min-w-0">
+                  {debtor.github_avatar_url ? (
+                    <img 
+                      src={debtor.github_avatar_url} 
+                      alt={debtor.name} 
+                      className="w-12 h-12 rounded-full object-cover border border-[#143527]"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-emerald-800 flex items-center justify-center font-bold text-white">
+                      {debtor.name?.[0] || 'M'}
+                    </div>
+                  )}
+
+                  <div className="min-w-0">
+                    <h4 className="text-base font-bold text-white truncate">{debtor.name}</h4>
+                    <p className="text-xs font-mono text-emerald-400/70 truncate">@{debtor.github_username}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="text-right font-mono">
+                    <span className="text-2xl font-bold text-amber-400">{debtor.coffee_debt}</span>
+                    <span className="text-xs text-amber-400/80 ml-1">coffees</span>
+                  </div>
+
+                  <a
+                    href={debtor.github_url || `https://github.com/${debtor.github_username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 text-emerald-400 hover:text-white rounded-lg border border-[#143527] hover:border-emerald-500/40 transition-colors"
+                    title="View GitHub"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
     </div>
   );

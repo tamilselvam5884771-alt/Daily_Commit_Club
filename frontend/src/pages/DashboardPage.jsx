@@ -125,7 +125,7 @@ export default function DashboardPage() {
       </section>
 
       {/* 2. Status Card */}
-      <section className="status-card">
+      <section className="card status-card">
         {loading ? (
           <div className="animate-pulse space-y-3 w-full">
             <div className="h-4 w-32 bg-emerald-900/40 rounded"></div>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
       <section className="stats-grid">
         
         {/* Card 1: Today's Commits */}
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className="flex items-center gap-2 text-emerald-400">
             <GitBranch className="w-4 h-4 shrink-0" />
             <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-300/80">TODAY'S COMMITS</span>
@@ -244,7 +244,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 2: Current Streak */}
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className="flex items-center gap-2 text-amber-500">
             <Flame className="w-4 h-4 shrink-0" />
             <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-300/80">CURRENT STREAK</span>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 3: Longest Streak */}
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className="flex items-center gap-2 text-cyan-400">
             <Trophy className="w-4 h-4 shrink-0" />
             <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-300/80">LONGEST STREAK</span>
@@ -278,7 +278,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 4: Coffee Debt */}
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className="flex items-center gap-2 text-amber-400">
             <Coffee className="w-4 h-4 shrink-0" />
             <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-300/80">COFFEE DEBT</span>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
       <section className="activity-grid">
         
         {/* Latest Commit Card */}
-        <div className="activity-card">
+        <div className="card activity-card">
           <div>
             <div className="flex items-center justify-between pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                   href={latestCommit?.url || `https://github.com/${profile?.github_username || 'tamilselvam5884771-alt'}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="card-action-btn font-mono"
+                  className="btn-action font-mono"
                 >
                   <Github className="w-4 h-4 text-emerald-400" />
                   <span>View commit on GitHub</span>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="pt-4 mt-2 text-xs text-emerald-500/80 font-mono flex items-center justify-between">
+          <div className="pt-4 mt-2 text-xs text-emerald-500/80 font-mono flex items-center justify-between border-t border-[#143527]/60">
             <span className="flex items-center gap-1.5">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
               Verified against GitHub Public API
@@ -348,7 +348,7 @@ export default function DashboardPage() {
         </div>
 
         {/* GitHub Profile Card */}
-        <div className="activity-card">
+        <div className="card activity-card">
           <div>
             <div className="pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -390,7 +390,7 @@ export default function DashboardPage() {
                 href={profile?.github_url || `https://github.com/${profile?.github_username || 'tamilselvam5884771-alt'}`}
                 target="_blank"
                 rel="noreferrer"
-                className="card-action-btn font-mono"
+                className="btn-action font-mono"
               >
                 <Github className="w-4 h-4 text-emerald-400" />
                 <span>Open GitHub Profile</span>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="pt-4 mt-2 text-xs text-emerald-400/70 leading-relaxed font-mono flex items-center gap-2">
+          <div className="pt-4 mt-2 text-xs text-emerald-400/70 leading-relaxed font-mono flex items-center gap-2 border-t border-[#143527]/60">
             <span>💡</span>
             <span>Your daily activity is automatically checked against public GitHub events.</span>
           </div>

@@ -12,7 +12,9 @@ import {
   Flame, 
   GitCommit,
   RefreshCw,
-  Search
+  Search,
+  ShieldCheck,
+  CheckCircle
 } from 'lucide-react';
 
 export default function MembersPage() {
@@ -28,15 +30,16 @@ export default function MembersPage() {
     setError(null);
 
     try {
-      // 1. Fetch all profiles
+      // 1. Fetch only Daily Commit Club profiles (must have github_username)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
+        .not('github_username', 'is', null)
         .order('name', { ascending: true });
 
       if (profilesError) throw profilesError;
 
-      // 2. Fetch today's daily_activity records for all users
+      // 2. Fetch today's daily_activity records for these users
       const { data: activityData, error: activityError } = await supabase
         .from('daily_activity')
         .select('*')
@@ -80,7 +83,6 @@ export default function MembersPage() {
         const pA = statusPriority[a.todayStatus] || 5;
         const pB = statusPriority[b.todayStatus] || 5;
         if (pA !== pB) return pA - pB;
-        // Secondary sort by commit count descending
         return b.todayCommits - a.todayCommits;
       });
 
@@ -112,224 +114,220 @@ export default function MembersPage() {
   );
 
   return (
-    <div className="page-container space-y-6 sm:space-y-8 animate-fade-in text-emerald-50">
+    <div className="page-container space-y-6">
         
-        {/* Page Title Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-900/40 pb-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-semibold text-emerald-400 uppercase tracking-wider mb-1">
-              <Users className="w-4 h-4 text-emerald-400" />
-              <span>Daily Commit Club Directory</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-emerald-50 tracking-tight">
-              Member Status
-            </h1>
-            <p className="text-xs text-emerald-400/70 mt-1">
-              Real-time daily commitment status for all club members on {formatKolkataDisplayDate()}
-            </p>
+      {/* 1. Page Header */}
+      <section className="dashboard-header">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-mono font-semibold text-emerald-400 uppercase tracking-wider mb-1">
+            <Users className="w-4 h-4 text-emerald-400" />
+            <span>Daily Commit Club Directory</span>
           </div>
-
-          <button
-            onClick={fetchMembersData}
-            disabled={loading}
-            className="club-button-secondary py-2.5 px-4 text-xs shrink-0 self-start md:self-auto"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Directory</span>
-          </button>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Member Status
+          </h1>
+          <p className="text-xs sm:text-sm text-emerald-400/80 mt-1 font-mono">
+            Real-time daily commitment status for {formatKolkataDisplayDate()} • Asia/Kolkata (IST)
+          </p>
         </div>
 
-        {/* SUMMARY STATS GRID */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          
-          <div className="club-card p-4">
-            <span className="text-[11px] font-mono font-semibold text-emerald-400/70 uppercase">Total Members</span>
-            <div className="text-2xl font-extrabold text-emerald-50 font-mono mt-1">{totalMembers}</div>
-          </div>
+        <button
+          onClick={fetchMembersData}
+          disabled={loading}
+          className="btn-secondary self-start sm:self-auto"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? 'animate-spin' : ''}`} />
+          <span>Refresh Directory</span>
+        </button>
+      </section>
 
-          <div className="club-card p-4 border-emerald-500/40 bg-emerald-950/60">
-            <span className="text-[11px] font-mono font-semibold text-emerald-400 uppercase">Committed Today</span>
-            <div className="text-2xl font-extrabold text-emerald-400 font-mono mt-1 flex items-center gap-1.5">
-              {committedCount}
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            </div>
-          </div>
-
-          <div className="club-card p-4 border-amber-500/30 bg-amber-950/20">
-            <span className="text-[11px] font-mono font-semibold text-amber-300 uppercase">Pending</span>
-            <div className="text-2xl font-extrabold text-amber-400 font-mono mt-1 flex items-center gap-1.5">
-              {pendingCount}
-              <Clock className="w-4 h-4 text-amber-400" />
-            </div>
-          </div>
-
-          <div className="club-card p-4 border-red-500/30 bg-red-950/20">
-            <span className="text-[11px] font-mono font-semibold text-red-300 uppercase">Missed Today</span>
-            <div className="text-2xl font-extrabold text-red-400 font-mono mt-1 flex items-center gap-1.5">
-              {missedCount}
-              <Coffee className="w-4 h-4 text-red-400" />
-            </div>
-          </div>
-
-          <div className="club-card p-4 border-amber-500/40 col-span-2 sm:col-span-1">
-            <span className="text-[11px] font-mono font-semibold text-amber-400/80 uppercase">Total Coffee Debt</span>
-            <div className="text-2xl font-extrabold text-amber-400 font-mono mt-1">
-              {totalCoffeeOwed} ☕
-            </div>
-          </div>
-
+      {/* 2. Summary Stats Grid (5 Cards) */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        
+        <div className="card p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-mono font-semibold text-emerald-400/70 uppercase">Total Members</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono mt-1">{totalMembers}</div>
         </div>
 
-        {/* SEARCH BAR */}
-        <div className="relative max-w-md">
-          <Search className="w-4 h-4 text-emerald-500/60 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search member by name or username..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="club-input pl-10 text-xs py-2.5"
-          />
+        <div className="card p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-mono font-semibold text-emerald-400 uppercase">Committed</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono mt-1 flex items-center gap-1.5">
+            {committedCount}
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          </div>
         </div>
 
-        {/* MEMBERS LIST GRID */}
+        <div className="card p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-mono font-semibold text-amber-400 uppercase">Pending</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono mt-1 flex items-center gap-1.5">
+            {pendingCount}
+            <Clock className="w-4 h-4 text-amber-400" />
+          </div>
+        </div>
+
+        <div className="card p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-mono font-semibold text-red-400 uppercase">Missed</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-red-400 font-mono mt-1 flex items-center gap-1.5">
+            {missedCount}
+            <Coffee className="w-4 h-4 text-red-400" />
+          </div>
+        </div>
+
+        <div className="card p-4 flex flex-col justify-between col-span-2 sm:col-span-1">
+          <span className="text-[11px] font-mono font-semibold text-amber-400 uppercase">Coffee Debt</span>
+          <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono mt-1">
+            {totalCoffeeOwed} ☕
+          </div>
+        </div>
+
+      </section>
+
+      {/* 3. Search Bar */}
+      <section className="relative max-w-md">
+        <Search className="w-4 h-4 text-emerald-500/60 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Search member by name or username..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="form-input"
+          style={{ paddingLeft: '38px', height: '44px', fontSize: '0.875rem' }}
+        />
+      </section>
+
+      {/* 4. Members Directory Grid */}
+      <section>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="club-card p-5 animate-pulse space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[1, 2].map(i => (
+              <div key={i} className="card p-6 animate-pulse space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-900/50"></div>
-                  <div className="space-y-1">
-                    <div className="w-24 h-4 bg-emerald-900/50 rounded"></div>
-                    <div className="w-16 h-3 bg-emerald-900/50 rounded"></div>
+                  <div className="w-12 h-12 rounded-full bg-emerald-900/40"></div>
+                  <div className="space-y-1.5">
+                    <div className="w-28 h-4 bg-emerald-900/40 rounded"></div>
+                    <div className="w-20 h-3 bg-emerald-900/40 rounded"></div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="club-card p-8 text-center text-red-300 bg-red-950/30 border-red-800/40">
+          <div className="card p-8 text-center text-red-300">
             <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
             <p className="text-sm font-semibold">{error}</p>
           </div>
         ) : filteredMembers.length === 0 ? (
-          <div className="club-card p-8 text-center text-emerald-400/60">
-            <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <div className="card p-12 text-center text-emerald-400/60 space-y-2">
+            <Users className="w-8 h-8 mx-auto text-emerald-400/40" />
             <p className="text-sm">No members found matching your search.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className={`grid gap-5 ${filteredMembers.length === 1 ? 'grid-cols-1 max-w-2xl' : 'grid-cols-1 md:grid-cols-2'}`}>
             {filteredMembers.map(member => (
-              <div 
-                key={member.id} 
-                className={`club-card p-5 flex flex-col justify-between space-y-4 ${
-                  member.todayStatus === 'COMMITTED' 
-                    ? 'border-emerald-500/40 bg-gradient-to-b from-emerald-950/70 to-emerald-950/30' 
-                    : member.todayStatus === 'PENDING'
-                    ? 'border-amber-500/30'
-                    : member.todayStatus === 'MISSED'
-                    ? 'border-red-500/30 bg-red-950/10'
-                    : 'border-emerald-900/60'
-                }`}
-              >
+              <div key={member.id} className="card flex flex-col justify-between space-y-5">
                 
-                {/* Member Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    {member.github_avatar_url ? (
-                      <img 
-                        src={member.github_avatar_url} 
-                        alt={member.name}
-                        className="w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] rounded-full object-cover border border-emerald-500/30"
-                      />
-                    ) : (
-                      <div className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-emerald-800 flex items-center justify-center font-bold text-emerald-100">
-                        {member.name?.[0] || 'M'}
+                {/* Member Top Row */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="relative shrink-0">
+                      {member.github_avatar_url ? (
+                        <img 
+                          src={member.github_avatar_url} 
+                          alt={member.name}
+                          className="w-14 h-14 rounded-full object-cover border border-[#143527]"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-emerald-800 flex items-center justify-center text-lg font-bold text-emerald-100">
+                          {member.name?.[0] || 'M'}
+                        </div>
+                      )}
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-emerald-500 text-emerald-950 flex items-center justify-center border-2 border-[#071a12]">
+                        <CheckCircle className="w-3 h-3 stroke-[3]" />
                       </div>
-                    )}
-                    <div>
-                      <h3 className="text-sm font-bold text-emerald-100 leading-snug">{member.name}</h3>
-                      <a 
-                        href={member.github_url || `https://github.com/${member.github_username}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-mono text-emerald-400/70 hover:text-emerald-200 inline-flex items-center gap-1"
-                      >
-                        @{member.github_username}
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
+                    </div>
+
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-bold text-white truncate">{member.name}</h3>
+                      <p className="text-xs font-mono text-emerald-400/70 truncate">@{member.github_username}</p>
+                      <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
+                        <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                        <span>Member Verified</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Status Badge */}
-                  <div>
+                  <div className="shrink-0">
                     {member.todayStatus === 'COMMITTED' && (
-                      <span className="status-badge status-committed text-[10px] py-1 px-2.5">
-                        <CheckCircle2 className="w-3 h-3" />
+                      <span className="status-pill status-pill-committed">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         COMMITTED
                       </span>
                     )}
                     {member.todayStatus === 'PENDING' && (
-                      <span className="status-badge status-pending text-[10px] py-1 px-2.5">
-                        <Clock className="w-3 h-3" />
+                      <span className="status-pill status-pending">
+                        <Clock className="w-3.5 h-3.5" />
                         PENDING
                       </span>
                     )}
                     {member.todayStatus === 'MISSED' && (
-                      <span className="status-badge status-missed text-[10px] py-1 px-2.5">
-                        <Coffee className="w-3 h-3" />
+                      <span className="status-pill status-missed">
+                        <Coffee className="w-3.5 h-3.5" />
                         MISSED
                       </span>
                     )}
                     {member.todayStatus === 'ERROR' && (
-                      <span className="status-badge bg-emerald-900 text-emerald-300 text-[10px] py-1 px-2.5">
-                        <AlertTriangle className="w-3 h-3 text-amber-400" />
+                      <span className="status-pill status-missed">
+                        <AlertTriangle className="w-3.5 h-3.5" />
                         ERROR
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Status Stats Row */}
-                <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-lg bg-emerald-950/80 border border-emerald-900/50 text-center font-mono">
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-3 gap-2 py-3 px-3.5 rounded-xl bg-[#04110C] border border-[#143527] font-mono text-center">
                   <div>
-                    <span className="text-[10px] text-emerald-500/70 uppercase block">Commits</span>
-                    <span className="text-sm font-bold text-emerald-100">{member.todayCommits}</span>
+                    <div className="text-[10px] text-emerald-400/60 uppercase">Commits</div>
+                    <div className="text-base font-bold text-white mt-0.5">
+                      {member.todayCommits}
+                    </div>
                   </div>
+
                   <div>
-                    <span className="text-[10px] text-emerald-500/70 uppercase block">Streak</span>
-                    <span className="text-sm font-bold text-amber-400 flex items-center justify-center gap-0.5">
-                      <Flame className="w-3 h-3 text-amber-500" />
+                    <div className="text-[10px] text-emerald-400/60 uppercase">Streak</div>
+                    <div className="text-base font-bold text-amber-400 mt-0.5">
                       {member.current_streak || 0}d
-                    </span>
+                    </div>
                   </div>
+
                   <div>
-                    <span className="text-[10px] text-emerald-500/70 uppercase block">Coffee</span>
-                    <span className="text-sm font-bold text-amber-400 flex items-center justify-center gap-0.5">
-                      ☕ {member.coffee_debt || 0}
-                    </span>
+                    <div className="text-[10px] text-emerald-400/60 uppercase">Debt</div>
+                    <div className="text-base font-bold text-amber-400 mt-0.5">
+                      {member.coffee_debt || 0} ☕
+                    </div>
                   </div>
                 </div>
 
-                {/* Recent Repo Footer */}
-                {member.latestRepo ? (
-                  <div className="text-[11px] font-mono text-emerald-400/60 truncate flex items-center gap-1.5">
-                    <GitCommit className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span className="truncate">{member.latestRepo}</span>
-                    {member.latestTime && (
-                      <span className="text-emerald-600 font-sans">• {formatKolkataTime(member.latestTime)}</span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-[11px] font-mono text-emerald-600 italic">
-                    No commits recorded today
-                  </div>
-                )}
+                {/* Footer Link */}
+                <div className="pt-1">
+                  <a
+                    href={member.github_url || `https://github.com/${member.github_username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-action font-mono text-xs"
+                  >
+                    <Github className="w-4 h-4 text-emerald-400" />
+                    <span>View GitHub Profile</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-emerald-400/70" />
+                  </a>
+                </div>
 
               </div>
             ))}
           </div>
         )}
+      </section>
 
     </div>
   );

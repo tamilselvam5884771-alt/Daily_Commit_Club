@@ -2,42 +2,39 @@
 @import "tailwindcss";
 
 /* ==================================================
-   1. DESIGN TOKENS
+   1. DESIGN TOKENS (UI V2)
    ================================================== */
 :root {
   --bg: #04110c;
-  --surface: #071c13;
-  --surface-raised: #0b291d;
-  --surface-hover: #0e3324;
+  --surface: #071a12;
+  --surface-raised: #0b2118;
+  --surface-hover: #0e2d21;
 
-  --border: #143d2b;
-  --border-subtle: #0f2c1f;
-  --border-highlight: #1e5a3f;
+  --border: #143527;
+  --border-focus: #10b981;
+  --border-highlight: #1c4b37;
 
   --primary: #10b981;
   --primary-hover: #059669;
-  --primary-glow: rgba(16, 185, 129, 0.25);
 
   --text: #ecfdf5;
-  --text-secondary: #a7c9bb;
-  --text-muted: #5e8a77;
+  --text-muted: #7faf9d;
 
   --accent-amber: #f59e0b;
   --accent-cyan: #06b6d4;
+  --accent-red: #ef4444;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius: 16px;
+  --radius-sm: 10px;
 
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'Fira Code', monospace;
 
-  --container-max: 1280px;
+  --container-max: 1400px;
 }
 
 /* ==================================================
-   2. GLOBAL RESET & BASE TYPOGRAPHY
+   2. GLOBAL RESET & BASE
    ================================================== */
 *,
 *::before,
@@ -94,52 +91,58 @@ button {
   font-family: var(--font-sans);
 }
 
-/* Focus states */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+/* ==================================================
+   3. ONE GLOBAL PAGE CONTAINER
+   ================================================== */
+main.page {
+  width: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding-block: 32px;
 }
 
-/* ==================================================
-   3. APPLICATION CONTAINER SYSTEM (SYMMETRIC CENTERING)
-   ================================================== */
 .page-container {
   width: 100%;
   max-width: var(--container-max);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 16px;
-  padding-right: 16px;
+  margin-inline: auto;
+  padding-inline: 16px;
   box-sizing: border-box;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .page-container {
-    padding-left: 24px;
-    padding-right: 24px;
+    padding-inline: 24px;
   }
 }
 
 @media (min-width: 1024px) {
   .page-container {
-    padding-left: 32px;
-    padding-right: 32px;
+    padding-inline: 32px;
   }
 }
 
 /* ==================================================
-   4. NAVBAR
+   4. ONE SHARED CARD SYSTEM
+   ================================================== */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* ==================================================
+   5. NAVBAR
    ================================================== */
 .navbar {
   width: 100%;
-  background-color: #05140e;
+  background-color: var(--surface);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(12px);
 }
 
 .navbar-inner {
@@ -154,11 +157,11 @@ input:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-secondary);
-  transition: all 0.15s ease;
+  color: var(--text-muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
   border: 1px solid transparent;
 }
 
@@ -170,11 +173,11 @@ input:focus-visible {
 .nav-link.active {
   color: var(--primary);
   background-color: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.35);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 /* ==================================================
-   5. DASHBOARD LAYOUT SYSTEM
+   6. DASHBOARD GRIDS & LAYOUT
    ================================================== */
 .dashboard-header {
   display: flex;
@@ -193,10 +196,6 @@ input:focus-visible {
 
 /* Status Card */
 .status-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
   margin-bottom: 24px;
   display: flex;
   flex-direction: column;
@@ -211,11 +210,11 @@ input:focus-visible {
   }
 }
 
-/* Stats Grid (4 Equal Cards) */
+/* Stats Grid (4 Equal Columns) */
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 20px;
   margin-bottom: 24px;
 }
 
@@ -228,29 +227,18 @@ input:focus-visible {
 @media (min-width: 1024px) {
   .stats-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
   }
 }
 
 .stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   min-height: 140px;
-  box-sizing: border-box;
   min-width: 0;
-  transition: border-color 0.2s ease;
 }
 
-.stat-card:hover {
-  border-color: var(--border-highlight);
-}
-
-/* Activity Grid (Latest Commit & GitHub Profile) */
+/* Activity Grid (2 Columns) */
 .activity-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -260,142 +248,90 @@ input:focus-visible {
 
 @media (min-width: 1024px) {
   .activity-grid {
-    grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.9fr);
-    gap: 20px;
+    grid-template-columns: 1.6fr 1fr;
   }
 }
 
 .activity-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   min-width: 0;
-  box-sizing: border-box;
   height: 100%;
-  transition: border-color 0.2s ease;
-}
-
-.activity-card:hover {
-  border-color: var(--border-highlight);
-}
-
-/* General Card */
-.card,
-.club-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
-}
-
-.card:hover,
-.club-card:hover {
-  border-color: var(--border-highlight);
 }
 
 /* ==================================================
-   6. BUTTONS & ACTIONS
+   7. BUTTONS
    ================================================== */
-.btn-primary,
-.club-button-primary {
+.btn-primary {
   background-color: var(--primary);
   color: #04110c;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   padding: 12px 24px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-family: var(--font-mono);
-  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+  transition: background-color 0.15s ease;
 }
 
-.btn-primary:hover,
-.club-button-primary:hover {
+.btn-primary:hover {
   background-color: var(--primary-hover);
-  box-shadow: 0 4px 20px var(--primary-glow);
 }
 
-.btn-secondary,
-.club-button-secondary {
-  background-color: #051910;
+.btn-secondary {
+  background-color: var(--surface-raised);
   color: var(--text);
   border: 1px solid var(--border);
   font-weight: 600;
   font-size: 0.85rem;
   padding: 10px 18px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: var(--font-mono);
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.btn-secondary:hover,
-.club-button-secondary:hover {
+.btn-secondary:hover {
   border-color: var(--primary);
-  background-color: var(--surface-raised);
+  background-color: var(--surface-hover);
 }
 
-.card-action-btn {
+.btn-action {
   width: 100%;
-  background-color: #04110c;
+  background-color: var(--surface-raised);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   padding: 12px 16px;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s ease;
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.card-action-btn:hover {
+.btn-action:hover {
   border-color: var(--primary);
-  background-color: #061811;
-  color: #ffffff;
-}
-
-.club-input {
-  background-color: var(--surface-raised);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  width: 100%;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.club-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+  background-color: var(--surface-hover);
 }
 
 /* ==================================================
-   7. STATUS BADGES
+   8. STATUS BADGES
    ================================================== */
-.status-pill,
-.status-badge {
+.status-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -408,8 +344,7 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
-.status-pill-committed,
-.status-committed {
+.status-pill-committed {
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.4);
   color: #34d399;
@@ -428,22 +363,153 @@ input:focus-visible {
 }
 
 /* ==================================================
-   8. ANIMATIONS & ACCESSIBILITY
+   9. FORM INPUTS & CONTROLS
    ================================================== */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.25s ease-out forwards;
+.form-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-fade-in {
-    animation: none;
-  }
-  .card, .stat-card, .activity-card {
-    transition: none;
-  }
+.input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
+
+.form-input {
+  width: 100%;
+  height: 50px;
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 16px;
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  background-color: var(--surface-hover);
+}
+
+.form-input::placeholder {
+  color: rgba(127, 175, 157, 0.4);
+}
+
+.input-icon-btn {
+  position: absolute;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.15s ease;
+}
+
+.input-icon-btn:hover {
+  color: var(--text);
+}
+
+/* ==================================================
+   10. SEGMENTED TABS
+   ================================================== */
+.tab-segmented {
+  display: flex;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tab-segmented-btn {
+  flex: 1;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.tab-segmented-btn:hover {
+  color: var(--text);
+}
+
+.tab-segmented-btn.active {
+  background-color: var(--surface-raised);
+  color: var(--primary);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* ==================================================
+   11. AUTH CARD & PAGE
+   ================================================== */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background-color: var(--bg);
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  margin-inline: auto;
+}
+
+/* Alert Boxes */
+.alert-box {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.alert-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
