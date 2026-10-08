@@ -63,11 +63,11 @@ export default function Navbar() {
             {profile?.github_avatar_url ? (
               <img 
                 src={profile.github_avatar_url} 
-                alt={profile.name} 
-                className="w-6 h-6 rounded-full object-cover border border-emerald-500/30"
+                alt={profile.name || 'User avatar'} 
+                className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] shrink-0 rounded-full object-cover border border-emerald-500/30"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-emerald-800 flex items-center justify-center text-xs font-bold text-emerald-100">
+              <div className="w-6 h-6 min-w-[24px] min-h-[24px] shrink-0 rounded-full bg-emerald-800 flex items-center justify-center text-xs font-bold text-emerald-100">
                 {profile?.name?.[0] || 'U'}
               </div>
             )}
@@ -76,7 +76,7 @@ export default function Navbar() {
 
           <button
             onClick={handleLogout}
-            className="p-2 text-emerald-400/70 hover:text-emerald-100 hover:bg-emerald-900/60 rounded-lg transition-colors border border-transparent hover:border-emerald-800/50"
+            className="p-2 text-emerald-400/70 hover:text-emerald-100 hover:bg-emerald-900/60 rounded-lg transition-colors border border-transparent hover:border-emerald-800/50 cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />
@@ -86,7 +86,7 @@ export default function Navbar() {
         {/* Mobile Hamburger Toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-emerald-300 hover:text-emerald-100 rounded-lg focus:outline-none"
+          className="md:hidden p-2 text-emerald-300 hover:text-emerald-100 rounded-lg focus:outline-none cursor-pointer"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -116,14 +116,14 @@ export default function Navbar() {
           <div className="pt-3 border-t border-emerald-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {profile?.github_avatar_url && (
-                <img src={profile.github_avatar_url} alt="" className="w-6 h-6 rounded-full" />
+                <img src={profile.github_avatar_url} alt="" className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] shrink-0 rounded-full object-cover" />
               )}
               <span className="text-xs text-emerald-200 font-semibold">{profile?.name}</span>
             </div>
 
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-lg bg-emerald-900/40 text-xs text-emerald-300 font-semibold border border-emerald-800/60 flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg bg-emerald-900/40 text-xs text-emerald-300 font-semibold border border-emerald-800/60 flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Logout</span>

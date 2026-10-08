@@ -147,10 +147,10 @@ export default function CoffeePage() {
                       <img 
                         src={debtor.github_avatar_url} 
                         alt={debtor.name} 
-                        className="w-12 h-12 rounded-full object-cover border-2 border-amber-500/40 shadow-md"
+                        className="w-12 h-12 min-w-[48px] min-h-[48px] max-w-[48px] max-h-[48px] rounded-full object-cover border-2 border-amber-500/40 shadow-md"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-amber-900/60 border border-amber-700 flex items-center justify-center font-bold text-amber-100 text-base">
+                      <div className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-amber-900/60 border border-amber-700 flex items-center justify-center font-bold text-amber-100 text-base">
                         {debtor.name?.[0] || 'D'}
                       </div>
                     )}

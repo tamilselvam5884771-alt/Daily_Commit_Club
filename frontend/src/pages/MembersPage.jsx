@@ -241,10 +241,10 @@ export default function MembersPage() {
                       <img 
                         src={member.github_avatar_url} 
                         alt={member.name}
-                        className="w-11 h-11 rounded-full object-cover border border-emerald-500/30"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] rounded-full object-cover border border-emerald-500/30"
                       />
                     ) : (
-                      <div className="w-11 h-11 rounded-full bg-emerald-800 flex items-center justify-center font-bold text-emerald-100">
+                      <div className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-emerald-800 flex items-center justify-center font-bold text-emerald-100">
                         {member.name?.[0] || 'M'}
                       </div>
                     )}
