@@ -6,34 +6,34 @@
    ================================================== */
 :root {
   --bg: #04110c;
-  --surface: #071a12;
-  --surface-raised: #0a2118;
-  --surface-hover: #0d291f;
+  --surface: #071c13;
+  --surface-raised: #0b291d;
+  --surface-hover: #0e3324;
 
-  --border: #17372b;
-  --border-subtle: #102a20;
-  --border-highlight: #245844;
+  --border: #143d2b;
+  --border-subtle: #0f2c1f;
+  --border-highlight: #1e5a3f;
 
   --primary: #10b981;
   --primary-hover: #059669;
-  --primary-glow: rgba(16, 185, 129, 0.15);
+  --primary-glow: rgba(16, 185, 129, 0.25);
 
   --text: #ecfdf5;
   --text-secondary: #a7c9bb;
-  --text-muted: #6f9b8a;
+  --text-muted: #5e8a77;
 
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --accent-amber: #f59e0b;
+  --accent-cyan: #06b6d4;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 20px;
 
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'Fira Code', monospace;
 
-  --container-max: 1440px;
+  --container-max: 1280px;
 }
 
 /* ==================================================
@@ -103,16 +103,8 @@ input:focus-visible {
 }
 
 /* ==================================================
-   3. APPLICATION CONTAINER SYSTEM (BULLETPROOF CENTERING)
+   3. APPLICATION CONTAINER SYSTEM (SYMMETRIC CENTERING)
    ================================================== */
-.app-shell {
-  width: 100%;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .page-container {
   width: 100%;
   max-width: var(--container-max);
@@ -138,11 +130,11 @@ input:focus-visible {
 }
 
 /* ==================================================
-   4. NAVBAR STYLING
+   4. NAVBAR
    ================================================== */
-.navbar-header {
+.navbar {
   width: 100%;
-  background-color: var(--surface);
+  background-color: #05140e;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -178,31 +170,53 @@ input:focus-visible {
 .nav-link.active {
   color: var(--primary);
   background-color: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 /* ==================================================
-   5. CARDS & SURFACES SYSTEM
+   5. DASHBOARD LAYOUT SYSTEM
    ================================================== */
-.club-card,
-.card {
-  background-color: var(--surface);
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 640px) {
+  .dashboard-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* Status Card */
+.status-card {
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-sizing: border-box;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.club-card:hover,
-.card:hover {
-  border-color: var(--border-highlight);
+@media (min-width: 768px) {
+  .status-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
-/* Stats Cards Grid */
+/* Stats Grid (4 Equal Cards) */
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+  margin-bottom: 24px;
 }
 
 @media (min-width: 640px) {
@@ -219,20 +233,25 @@ input:focus-visible {
 }
 
 .stat-card {
-  background-color: var(--surface);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  min-height: 140px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-height: 140px;
   box-sizing: border-box;
   min-width: 0;
+  transition: border-color 0.2s ease;
 }
 
-/* Dashboard Main 2-Column Grid */
-.dashboard-main-grid {
+.stat-card:hover {
+  border-color: var(--border-highlight);
+}
+
+/* Activity Grid (Latest Commit & GitHub Profile) */
+.activity-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
@@ -240,21 +259,54 @@ input:focus-visible {
 }
 
 @media (min-width: 1024px) {
-  .dashboard-main-grid {
-    grid-template-columns: 1.4fr 1fr;
-    gap: 24px;
+  .activity-grid {
+    grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.9fr);
+    gap: 20px;
   }
 }
 
+.activity-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 100%;
+  transition: border-color 0.2s ease;
+}
+
+.activity-card:hover {
+  border-color: var(--border-highlight);
+}
+
+/* General Card */
+.card,
+.club-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.card:hover,
+.club-card:hover {
+  border-color: var(--border-highlight);
+}
+
 /* ==================================================
-   6. BUTTONS & INPUTS SYSTEM
+   6. BUTTONS & ACTIONS
    ================================================== */
 .btn-primary,
 .club-button-primary {
   background-color: var(--primary);
-  color: #03140c;
+  color: #04110c;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   padding: 12px 24px;
   border-radius: var(--radius-md);
   border: none;
@@ -263,36 +315,63 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
   transition: all 0.2s ease;
 }
 
 .btn-primary:hover,
 .club-button-primary:hover {
   background-color: var(--primary-hover);
-  box-shadow: 0 4px 16px var(--primary-glow);
+  box-shadow: 0 4px 20px var(--primary-glow);
 }
 
 .btn-secondary,
 .club-button-secondary {
-  background-color: var(--surface-raised);
+  background-color: #051910;
   color: var(--text);
   border: 1px solid var(--border);
   font-weight: 600;
-  font-size: 0.875rem;
-  padding: 10px 20px;
+  font-size: 0.85rem;
+  padding: 10px 18px;
   border-radius: var(--radius-md);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  font-family: var(--font-mono);
   transition: all 0.2s ease;
 }
 
 .btn-secondary:hover,
 .club-button-secondary:hover {
-  border-color: var(--border-highlight);
-  background-color: var(--surface-hover);
+  border-color: var(--primary);
+  background-color: var(--surface-raised);
+}
+
+.card-action-btn {
+  width: 100%;
+  background-color: #04110c;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.card-action-btn:hover {
+  border-color: var(--primary);
+  background-color: #061811;
+  color: #ffffff;
 }
 
 .club-input {
@@ -315,6 +394,7 @@ input:focus-visible {
 /* ==================================================
    7. STATUS BADGES
    ================================================== */
+.status-pill,
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -323,31 +403,32 @@ input:focus-visible {
   border-radius: 9999px;
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
+.status-pill-committed,
 .status-committed {
   background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.4);
   color: #34d399;
 }
 
 .status-pending {
   background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  border: 1px solid rgba(245, 158, 11, 0.4);
   color: #fbbf24;
 }
 
 .status-missed {
   background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.4);
   color: #f87171;
 }
 
 /* ==================================================
-   8. ANIMATIONS & REDUCED MOTION
+   8. ANIMATIONS & ACCESSIBILITY
    ================================================== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
@@ -362,7 +443,7 @@ input:focus-visible {
   .animate-fade-in {
     animation: none;
   }
-  .club-card, .card {
+  .card, .stat-card, .activity-card {
     transition: none;
   }
 }

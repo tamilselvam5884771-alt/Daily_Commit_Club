@@ -29,9 +29,9 @@ function AuthenticatedApp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#04110C] flex flex-col font-sans w-full items-center">
+    <div className="min-h-screen bg-[#04110C] flex flex-col font-sans w-full">
       <Navbar />
-      <main className="app-shell w-full flex-1 flex flex-col items-center">
+      <main className="w-full flex-1 flex flex-col py-6 sm:py-8">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/members" element={<MembersPage />} />

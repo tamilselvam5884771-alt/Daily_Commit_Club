@@ -40,7 +40,7 @@ export default function CoffeePage() {
   const userDebt = profile?.coffee_debt || 0;
 
   return (
-    <div className="page-container flex-1 py-6 sm:py-8 space-y-6 sm:space-y-8 animate-fade-in text-emerald-50">
+    <div className="page-container space-y-6 sm:space-y-8 animate-fade-in text-emerald-50">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-900/40 pb-6">

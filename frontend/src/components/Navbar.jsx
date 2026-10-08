@@ -17,7 +17,7 @@ export default function Navbar() {
     `nav-link ${isActive ? 'active' : ''}`;
 
   return (
-    <header className="navbar-header">
+    <header className="navbar">
       <div className="page-container navbar-inner">
         
         {/* Brand Logo */}
