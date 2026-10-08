@@ -22,7 +22,7 @@ export default function Navbar() {
 
   return (
     <header className="border-b border-emerald-900/60 bg-emerald-950/90 backdrop-blur-md sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div className="page-container py-3.5 flex items-center justify-between">
         
         {/* Brand Logo */}
         <div className="flex items-center gap-3">

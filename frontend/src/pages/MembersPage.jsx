@@ -112,8 +112,7 @@ export default function MembersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#05140e] text-emerald-50 font-sans pb-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8 animate-fade-in">
+    <div className="page-container flex-1 py-6 sm:py-8 space-y-6 sm:space-y-8 animate-fade-in text-emerald-50">
         
         {/* Page Title Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-900/40 pb-6">
@@ -332,7 +331,6 @@ export default function MembersPage() {
           </div>
         )}
 
-      </div>
     </div>
   );
 }

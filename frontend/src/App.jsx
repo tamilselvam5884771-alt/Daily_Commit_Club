@@ -29,16 +29,16 @@ function AuthenticatedApp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#05140e] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#04110C] flex flex-col font-sans w-full">
       <Navbar />
-      <div className="flex-1">
+      <main className="app-shell">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/members" element={<MembersPage />} />
           <Route path="/coffee" element={<CoffeePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </div>
+      </main>
     </div>
   );
 }
