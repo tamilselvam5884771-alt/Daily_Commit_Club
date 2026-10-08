@@ -14,15 +14,11 @@ export default function Navbar() {
   };
 
   const navItemClass = ({ isActive }) =>
-    `flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold font-mono transition-all ${
-      isActive
-        ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm shadow-emerald-950'
-        : 'text-emerald-400/70 hover:text-emerald-100 hover:bg-emerald-900/40 border border-transparent'
-    }`;
+    `nav-link ${isActive ? 'active' : ''}`;
 
   return (
-    <header className="border-b border-emerald-900/60 bg-emerald-950/90 backdrop-blur-md sticky top-0 z-50">
-      <div className="page-container py-3.5 flex items-center justify-between">
+    <header className="navbar-header">
+      <div className="page-container navbar-inner">
         
         {/* Brand Logo */}
         <div className="flex items-center gap-3">
@@ -59,7 +55,7 @@ export default function Navbar() {
 
         {/* User Pill & Logout */}
         <div className="hidden md:flex items-center gap-3">
-          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-900/40 border border-emerald-800/60">
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-[#17372b]">
             {profile?.github_avatar_url ? (
               <img 
                 src={profile.github_avatar_url} 
@@ -76,7 +72,7 @@ export default function Navbar() {
 
           <button
             onClick={handleLogout}
-            className="p-2 text-emerald-400/70 hover:text-emerald-100 hover:bg-emerald-900/60 rounded-lg transition-colors border border-transparent hover:border-emerald-800/50 cursor-pointer"
+            className="p-2 text-emerald-400/70 hover:text-emerald-100 hover:bg-[#0d291f] rounded-lg transition-colors border border-transparent hover:border-[#17372b] cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />
@@ -95,7 +91,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-emerald-900/60 bg-emerald-950 px-4 py-4 space-y-3 animate-fade-in">
+        <div className="md:hidden border-t border-[#17372b] bg-[#071a12] px-4 py-4 space-y-3 animate-fade-in">
           <nav className="flex flex-col space-y-1">
             <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} className={navItemClass}>
               <LayoutDashboard className="w-4 h-4" />
@@ -113,7 +109,7 @@ export default function Navbar() {
             </NavLink>
           </nav>
 
-          <div className="pt-3 border-t border-emerald-900/50 flex items-center justify-between">
+          <div className="pt-3 border-t border-[#17372b] flex items-center justify-between">
             <div className="flex items-center gap-2">
               {profile?.github_avatar_url && (
                 <img src={profile.github_avatar_url} alt="" className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] shrink-0 rounded-full object-cover" />
@@ -123,7 +119,7 @@ export default function Navbar() {
 
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-lg bg-emerald-900/40 text-xs text-emerald-300 font-semibold border border-emerald-800/60 flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-[#0a2118] text-xs text-emerald-300 font-semibold border border-[#17372b] flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Logout</span>
