@@ -8,9 +8,8 @@ import {
   Coffee, 
   AlertTriangle, 
   Github, 
-  ExternalLink, 
+  ArrowUpRight, 
   Flame, 
-  GitCommit,
   RefreshCw,
   Search,
   ShieldCheck,
@@ -114,20 +113,25 @@ export default function MembersPage() {
   );
 
   return (
-    <div className="page-container space-y-6">
+    <div className="page-container space-y-8 font-pixel">
         
-      {/* 1. Page Header */}
-      <section className="dashboard-header">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono font-semibold text-emerald-400 uppercase tracking-wider mb-1">
-            <Users className="w-4 h-4 text-emerald-400" />
-            <span>Daily Commit Club Directory</span>
+      {/* 1. Header */}
+      <section className="dashboard-header border-b border-emerald-900/40 pb-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="pixel-badge">
+              <span className="pixel-dot"></span>
+              <span>MEMBER ROSTER</span>
+            </span>
+            <span className="text-xs text-emerald-600">•</span>
+            <span className="text-xs text-emerald-300 font-medium">{formatKolkataDisplayDate()}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Member Status
+
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#ecfdf5] tracking-tight font-display-clean">
+            Member Status Board 👥
           </h1>
-          <p className="text-xs sm:text-sm text-emerald-400/80 mt-1 font-mono">
-            Real-time daily commitment status for {formatKolkataDisplayDate()} • Asia/Kolkata (IST)
+          <p className="text-sm text-emerald-200/80 leading-relaxed font-sans-clean">
+            Real-time daily commitment status across all registered club members
           </p>
         </div>
 
@@ -136,62 +140,71 @@ export default function MembersPage() {
           disabled={loading}
           className="btn-secondary self-start sm:self-auto"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Directory</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#00ff88]' : ''}`} />
+          <span>REFRESH DIRECTORY</span>
         </button>
       </section>
 
-      {/* 2. Summary Stats Grid (5 Cards) */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      {/* 2. 5 HUD Metric Cards */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         
         <div className="card p-4 flex flex-col justify-between">
-          <span className="text-[11px] font-mono font-semibold text-emerald-400/70 uppercase">Total Members</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono mt-1">{totalMembers}</div>
+          <span className="text-[10px] font-arcade text-[#86efac] uppercase">TOTAL</span>
+          <div className="text-3xl sm:text-4xl font-bold text-[#ecfdf5] mt-2 tracking-tight">{totalMembers}</div>
         </div>
 
-        <div className="card p-4 flex flex-col justify-between">
-          <span className="text-[11px] font-mono font-semibold text-emerald-400 uppercase">Committed</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono mt-1 flex items-center gap-1.5">
+        <div className="card p-4 flex flex-col justify-between hover:border-[#00ff88] transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-arcade text-[#00ff88] uppercase">COMMITTED</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#00ff88]" />
+          </div>
+          <div className="text-3xl sm:text-4xl font-bold text-[#00ff88] mt-2 tracking-tight">
             {committedCount}
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
         </div>
 
-        <div className="card p-4 flex flex-col justify-between">
-          <span className="text-[11px] font-mono font-semibold text-amber-400 uppercase">Pending</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono mt-1 flex items-center gap-1.5">
+        <div className="card p-4 flex flex-col justify-between hover:border-[#fbbf24] transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-arcade text-[#fbbf24] uppercase">PENDING</span>
+            <Clock className="w-3.5 h-3.5 text-[#fbbf24]" />
+          </div>
+          <div className="text-3xl sm:text-4xl font-bold text-[#fbbf24] mt-2 tracking-tight">
             {pendingCount}
-            <Clock className="w-4 h-4 text-amber-400" />
           </div>
         </div>
 
-        <div className="card p-4 flex flex-col justify-between">
-          <span className="text-[11px] font-mono font-semibold text-red-400 uppercase">Missed</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-red-400 font-mono mt-1 flex items-center gap-1.5">
+        <div className="card p-4 flex flex-col justify-between hover:border-[#ef4444] transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-arcade text-[#ef4444] uppercase">MISSED</span>
+            <Coffee className="w-3.5 h-3.5 text-[#ef4444]" />
+          </div>
+          <div className="text-3xl sm:text-4xl font-bold text-[#f87171] mt-2 tracking-tight">
             {missedCount}
-            <Coffee className="w-4 h-4 text-red-400" />
           </div>
         </div>
 
-        <div className="card p-4 flex flex-col justify-between col-span-2 sm:col-span-1">
-          <span className="text-[11px] font-mono font-semibold text-amber-400 uppercase">Coffee Debt</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono mt-1">
-            {totalCoffeeOwed} ☕
+        <div className="card p-4 flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-[#fbbf24] transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-arcade text-[#fbbf24] uppercase">COFFEE DEBT</span>
+            <Coffee className="w-3.5 h-3.5 text-[#fbbf24]" />
+          </div>
+          <div className="text-3xl sm:text-4xl font-bold text-[#fbbf24] mt-2 tracking-tight">
+            {totalCoffeeOwed} <span className="text-sm font-arcade text-[#fbbf24]/70">CUPS</span>
           </div>
         </div>
 
       </section>
 
-      {/* 3. Search Bar */}
+      {/* 3. Retro Pixel Search Bar */}
       <section className="relative max-w-md">
-        <Search className="w-4 h-4 text-emerald-500/60 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Search className="w-4 h-4 text-[#86efac] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text"
-          placeholder="Search member by name or username..."
+          placeholder="SEARCH PLAYER BY NAME OR GITHUB..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="form-input"
-          style={{ paddingLeft: '38px', height: '44px', fontSize: '0.875rem' }}
+          style={{ paddingLeft: '44px', height: '48px', fontSize: '0.85rem' }}
         />
       </section>
 
@@ -199,32 +212,32 @@ export default function MembersPage() {
       <section>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {[1, 2].map(i => (
+            {[1, 2, 3, 4].map(i => (
               <div key={i} className="card p-6 animate-pulse space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-900/40"></div>
-                  <div className="space-y-1.5">
-                    <div className="w-28 h-4 bg-emerald-900/40 rounded"></div>
-                    <div className="w-20 h-3 bg-emerald-900/40 rounded"></div>
+                  <div className="w-12 h-12 bg-[#0d422c]"></div>
+                  <div className="space-y-2 flex-1">
+                    <div className="w-32 h-4 bg-[#0d422c]"></div>
+                    <div className="w-24 h-3 bg-[#0d422c]"></div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="card p-8 text-center text-red-300">
-            <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-            <p className="text-sm font-semibold">{error}</p>
+          <div className="card p-8 text-center text-[#fca5a5]">
+            <AlertTriangle className="w-8 h-8 text-[#ef4444] mx-auto mb-2" />
+            <p className="text-sm font-arcade">{error}</p>
           </div>
         ) : filteredMembers.length === 0 ? (
-          <div className="card p-12 text-center text-emerald-400/60 space-y-2">
-            <Users className="w-8 h-8 mx-auto text-emerald-400/40" />
-            <p className="text-sm">No members found matching your search.</p>
+          <div className="card p-12 text-center text-[#86efac] space-y-3">
+            <Users className="w-8 h-8 mx-auto text-[#10b981]" />
+            <p className="text-sm font-silkscreen">NO PLAYERS FOUND MATCHING "{searchQuery}".</p>
           </div>
         ) : (
           <div className={`grid gap-5 ${filteredMembers.length === 1 ? 'grid-cols-1 max-w-2xl' : 'grid-cols-1 md:grid-cols-2'}`}>
             {filteredMembers.map(member => (
-              <div key={member.id} className="card flex flex-col justify-between space-y-5">
+              <div key={member.id} className="card flex flex-col justify-between space-y-5 group hover:border-[#00ff88] transition-all">
                 
                 {/* Member Top Row */}
                 <div className="flex items-start justify-between gap-4">
@@ -234,24 +247,24 @@ export default function MembersPage() {
                         <img 
                           src={member.github_avatar_url} 
                           alt={member.name}
-                          className="w-14 h-14 rounded-full object-cover border border-[#143527]"
+                          className="w-14 h-14 object-cover border-2 border-[#10b981] shadow-[3px_3px_0px_#020604]"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-full bg-emerald-800 flex items-center justify-center text-lg font-bold text-emerald-100">
+                        <div className="w-14 h-14 bg-[#064e3b] flex items-center justify-center text-lg font-arcade text-white border-2 border-[#10b981]">
                           {member.name?.[0] || 'M'}
                         </div>
                       )}
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-emerald-500 text-emerald-950 flex items-center justify-center border-2 border-[#071a12]">
+                      <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 bg-[#00ff88] text-black flex items-center justify-center border-2 border-[#030d08]">
                         <CheckCircle className="w-3 h-3 stroke-[3]" />
                       </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <h3 className="text-lg font-bold text-white truncate">{member.name}</h3>
-                      <p className="text-xs font-mono text-emerald-400/70 truncate">@{member.github_username}</p>
-                      <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
-                        <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                        <span>Member Verified</span>
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="text-lg font-bold text-[#ecfdf5] truncate">{member.name}</h3>
+                      <p className="text-xs font-mono text-[#86efac] truncate">@{member.github_username}</p>
+                      <div className="flex items-center gap-1 text-[10px] text-[#00ff88] font-arcade">
+                        <ShieldCheck className="w-3 h-3 shrink-0" />
+                        <span>VERIFIED</span>
                       </div>
                     </div>
                   </div>
@@ -260,50 +273,50 @@ export default function MembersPage() {
                   <div className="shrink-0">
                     {member.todayStatus === 'COMMITTED' && (
                       <span className="status-pill status-pill-committed">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        COMMITTED
+                        <CheckCircle2 className="w-3 h-3 text-[#00ff88]" />
+                        <span>COMMITTED</span>
                       </span>
                     )}
                     {member.todayStatus === 'PENDING' && (
                       <span className="status-pill status-pending">
-                        <Clock className="w-3.5 h-3.5" />
-                        PENDING
+                        <Clock className="w-3 h-3 text-[#fbbf24]" />
+                        <span>PENDING</span>
                       </span>
                     )}
                     {member.todayStatus === 'MISSED' && (
                       <span className="status-pill status-missed">
-                        <Coffee className="w-3.5 h-3.5" />
-                        MISSED
+                        <Coffee className="w-3 h-3 text-[#ef4444]" />
+                        <span>MISSED</span>
                       </span>
                     )}
                     {member.todayStatus === 'ERROR' && (
-                      <span className="status-pill status-missed">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        ERROR
+                      <span className="status-pill bg-[#061910] text-[#fbbf24] border-2 border-[#fbbf24]">
+                        <AlertTriangle className="w-3 h-3 text-[#fbbf24]" />
+                        <span>ERROR</span>
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Metrics Grid */}
-                <div className="grid grid-cols-3 gap-2 py-3 px-3.5 rounded-xl bg-[#04110C] border border-[#143527] font-mono text-center">
+                <div className="grid grid-cols-3 gap-2 py-3 px-4 bg-[#030f0a] border-2 border-[#0d422c] text-center shadow-[2px_2px_0px_#020604]">
                   <div>
-                    <div className="text-[10px] text-emerald-400/60 uppercase">Commits</div>
-                    <div className="text-base font-bold text-white mt-0.5">
+                    <div className="text-[10px] font-arcade text-[#86efac]/70 uppercase">COMMITS</div>
+                    <div className="text-base font-bold text-[#ecfdf5] mt-0.5">
                       {member.todayCommits}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-[10px] text-emerald-400/60 uppercase">Streak</div>
-                    <div className="text-base font-bold text-amber-400 mt-0.5">
-                      {member.current_streak || 0}d
+                    <div className="text-[10px] font-arcade text-[#86efac]/70 uppercase">STREAK</div>
+                    <div className="text-base font-bold text-[#fbbf24] mt-0.5">
+                      {member.current_streak || 0}D
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-[10px] text-emerald-400/60 uppercase">Debt</div>
-                    <div className="text-base font-bold text-amber-400 mt-0.5">
+                    <div className="text-[10px] font-arcade text-[#86efac]/70 uppercase">DEBT</div>
+                    <div className="text-base font-bold text-[#fbbf24] mt-0.5">
                       {member.coffee_debt || 0} ☕
                     </div>
                   </div>
@@ -315,11 +328,11 @@ export default function MembersPage() {
                     href={member.github_url || `https://github.com/${member.github_username}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn-action font-mono text-xs"
+                    className="btn-action"
                   >
-                    <Github className="w-4 h-4 text-emerald-400" />
-                    <span>View GitHub Profile</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-emerald-400/70" />
+                    <Github className="w-4 h-4 text-[#00ff88]" />
+                    <span>VIEW GITHUB PROFILE</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
                   </a>
                 </div>
 

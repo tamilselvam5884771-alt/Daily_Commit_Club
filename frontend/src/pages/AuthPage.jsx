@@ -7,7 +7,10 @@ import {
   CheckCircle2, 
   Eye, 
   EyeOff, 
-  ShieldCheck
+  ShieldCheck,
+  User,
+  Lock,
+  Github
 } from 'lucide-react';
 
 export default function AuthPage() {
@@ -91,7 +94,6 @@ export default function AuthPage() {
 
     if (regPassword.length < 6) {
       setError('Password must be at least 6 characters long.');
-      return;
     }
 
     if (regPassword !== regConfirmPassword) {
@@ -144,28 +146,35 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="auth-page">
-      
-      {/* Brand Header */}
-      <div className="text-center mb-6 space-y-2">
-        <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2">
-          <Coffee className="w-8 h-8" />
+    <div className="auth-page relative overflow-hidden">
+      {/* Background ambient lighting effects */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 right-1/4 w-[380px] h-[380px] bg-teal-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Brand Header: Perfectly Centered & High Clarity */}
+      <div className="text-center mb-8 max-w-lg mx-auto relative z-10 flex flex-col items-center">
+        {/* Glow Icon */}
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/40 shadow-[0_0_25px_rgba(16,185,129,0.25)] text-emerald-400 mb-4 transition-transform hover:scale-105 duration-300">
+          <Coffee className="w-7 h-7 stroke-[2.2]" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
+        
+        {/* Main Title */}
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-[#ecfdf5] tracking-tight font-display-clean mb-3">
           DAILY COMMIT CLUB
         </h1>
-        <p className="text-xs sm:text-sm text-emerald-400/80 max-w-xs mx-auto leading-relaxed">
-          Private developer accountability.<br />
-          Miss a daily commit, owe coffee.
+
+        {/* Clear Subtitle */}
+        <p className="text-sm sm:text-base text-emerald-200/80 leading-relaxed font-sans-clean max-w-md text-center">
+          Developer Accountability Club. Miss a daily commit before 8:00 PM IST, owe coffee ☕
         </p>
       </div>
 
-      {/* Main Auth Card */}
-      <div className="card auth-card space-y-6">
+      {/* Main Auth Card with Polished Spacing */}
+      <div className="auth-card relative z-10">
         
-        {/* Segmented Tabs (Sign In / Join Club) */}
+        {/* Segmented Switcher (Sign In / Join Club) */}
         {viewMode !== 'forgot' && (
-          <div className="tab-segmented">
+          <div className="tab-segmented mb-6">
             <button
               type="button"
               onClick={() => handleSwitchMode('login')}
@@ -184,36 +193,36 @@ export default function AuthPage() {
         )}
 
         {viewMode === 'forgot' && (
-          <div className="flex items-center justify-between border-b border-[#143527] pb-3">
-            <h2 className="text-base font-bold text-white font-mono">Reset Password</h2>
+          <div className="flex items-center justify-between border-b border-emerald-900/60 pb-4 mb-6">
+            <h2 className="text-sm font-bold text-[#ecfdf5] uppercase tracking-wider font-display-clean">Reset Password</h2>
             <button
               type="button"
               onClick={() => handleSwitchMode('login')}
-              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300"
+              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
             >
-              Back to Sign In
+              ← Back to Sign In
             </button>
           </div>
         )}
 
         {/* Status Messages */}
         {error && (
-          <div className="alert-box alert-error">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>{error}</span>
+          <div className="alert-box alert-error mb-5">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+            <span className="text-red-200">{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="alert-box alert-success">
-            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>{success}</span>
+          <div className="alert-box alert-success mb-5">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+            <span className="text-emerald-200">{success}</span>
           </div>
         )}
 
         {/* 1. SIGN IN FORM */}
         {viewMode === 'login' && (
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <form onSubmit={handleLoginSubmit} className="space-y-5">
             
             <div className="form-group">
               <label htmlFor="login-identifier" className="form-label">
@@ -225,7 +234,7 @@ export default function AuthPage() {
                   type="text"
                   autoComplete="username"
                   required
-                  placeholder="e.g. HARII or tamilselvam5884771-alt"
+                  placeholder="e.g. Hari or github_username"
                   value={loginIdentifier}
                   onChange={(e) => setLoginIdentifier(e.target.value)}
                   className="form-input"
@@ -239,9 +248,9 @@ export default function AuthPage() {
                 <button
                   type="button"
                   onClick={() => handleSwitchMode('forgot')}
-                  className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium lowercase"
                 >
-                  Forgot?
+                  forgot?
                 </button>
               </div>
               <div className="input-container">
@@ -254,7 +263,7 @@ export default function AuthPage() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   className="form-input"
-                  style={{ paddingRight: '48px' }}
+                  style={{ paddingRight: '44px' }}
                 />
                 <button
                   type="button"
@@ -270,19 +279,19 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
-              style={{ height: '50px' }}
+              className="btn-primary w-full mt-2"
+              style={{ height: '48px' }}
             >
-              <span>{loading ? 'Signing In...' : 'Sign In'}</span>
+              <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            <div className="text-center pt-2 text-xs text-emerald-400/70">
+            <div className="text-center pt-3 text-xs text-emerald-300/80 font-sans-clean">
               Don't have an account?{' '}
               <button
                 type="button"
                 onClick={() => handleSwitchMode('register')}
-                className="font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 ml-1"
+                className="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline ml-1 cursor-pointer"
               >
                 Join Club
               </button>
@@ -342,7 +351,7 @@ export default function AuthPage() {
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
                   className="form-input"
-                  style={{ paddingRight: '48px' }}
+                  style={{ paddingRight: '44px' }}
                 />
                 <button
                   type="button"
@@ -364,11 +373,11 @@ export default function AuthPage() {
                   id="reg-confirm-password"
                   type={showRegConfirmPassword ? 'text' : 'password'}
                   required
-                  placeholder="Re-enter your password"
+                  placeholder="Re-enter password"
                   value={regConfirmPassword}
                   onChange={(e) => setRegConfirmPassword(e.target.value)}
                   className="form-input"
-                  style={{ paddingRight: '48px' }}
+                  style={{ paddingRight: '44px' }}
                 />
                 <button
                   type="button"
@@ -384,19 +393,19 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
-              style={{ height: '50px' }}
+              className="btn-primary w-full mt-2"
+              style={{ height: '48px' }}
             >
               <span>{loading ? 'Creating Account...' : 'Join Club'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            <div className="text-center pt-2 text-xs text-emerald-400/70">
+            <div className="text-center pt-3 text-xs text-emerald-300/80 font-sans-clean">
               Already have an account?{' '}
               <button
                 type="button"
                 onClick={() => handleSwitchMode('login')}
-                className="font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 ml-1"
+                className="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline ml-1 cursor-pointer"
               >
                 Sign In
               </button>
@@ -407,10 +416,10 @@ export default function AuthPage() {
 
         {/* 3. FORGOT PASSWORD FORM */}
         {viewMode === 'forgot' && (
-          <form onSubmit={handleForgotSubmit} className="space-y-4">
+          <form onSubmit={handleForgotSubmit} className="space-y-5">
             
-            <p className="text-xs text-emerald-400/70 leading-relaxed">
-              Enter your Name or GitHub username. A recovery link will be sent to the associated email address.
+            <p className="text-xs text-emerald-200/80 leading-relaxed font-sans-clean">
+              Enter your Name or GitHub username to request an account recovery link.
             </p>
 
             <div className="form-group">
@@ -422,7 +431,7 @@ export default function AuthPage() {
                   id="forgot-identifier"
                   type="text"
                   required
-                  placeholder="e.g. HARII or tamilselvam5884771-alt"
+                  placeholder="e.g. Hari or github_username"
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
                   className="form-input"
@@ -433,8 +442,8 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
-              style={{ height: '50px' }}
+              className="btn-primary w-full mt-2"
+              style={{ height: '48px' }}
             >
               <span>{loading ? 'Sending Request...' : 'Send Reset Link'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -444,9 +453,9 @@ export default function AuthPage() {
         )}
 
         {/* Protected by Supabase footer */}
-        <div className="pt-2 border-t border-[#143527] flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/60 font-mono">
+        <div className="mt-6 pt-4 border-t border-emerald-900/50 flex items-center justify-center gap-2 text-xs text-emerald-300/60 font-sans-clean">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Protected by Supabase Auth</span>
+          <span>Encrypted • Supabase Auth</span>
         </div>
 
       </div>
