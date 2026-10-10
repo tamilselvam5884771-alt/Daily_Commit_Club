@@ -83,13 +83,13 @@ export const checkTodayGithubActivity = async (username) => {
 
         if (eventDateKolkata === todayKolkataDate) {
           const commits = event.payload?.commits || [];
-          const numCommits = commits.length > 0 ? commits.length : 1; // Fallback 1 commit for PushEvent
+          const numCommits = commits.length > 0 ? commits.length : (event.payload?.size || 1); // Fallback to size or 1 commit for PushEvent
           todayCommits += numCommits;
 
           if (!latestCommit) {
             const firstCommit = commits[commits.length - 1] || commits[0];
             const repoName = event.repo?.name || 'GitHub Repository';
-            const commitSha = firstCommit?.sha || '';
+            const commitSha = firstCommit?.sha || event.payload?.head || '';
             const commitMsg = firstCommit?.message || 'Pushed commits to repository';
             const commitUrl = commitSha 
               ? `https://github.com/${repoName}/commit/${commitSha}`

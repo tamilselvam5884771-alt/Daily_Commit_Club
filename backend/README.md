@@ -19,4 +19,5 @@ This directory contains server-side components for **Daily Commit Club**:
 
 3. **Scheduled Execution (`pg_cron`)**
    - **7:30 PM IST (14:00 UTC):** `0 14 * * *` → Executes `generate_daily_commit_reminders()`.
-   - **8:00 PM IST (14:30 UTC):** `30 14 * * *` → Executes `process-daily-commit-status` Edge Function.
+   - **8:00 PM IST (14:30 UTC):** `30 14 * * *` → Executes `process_daily_missed_commit_status()` (invokes `process-daily-commit-status` Edge Function for server-side verification and records provisional, reversible penalties).
+   - **11:55 PM IST (18:25 UTC):** `25 18 * * *` → Executes end-of-day final verification. Late commits (up to 11:59 PM IST) reverse penalties idempotently.

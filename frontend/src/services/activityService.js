@@ -116,27 +116,38 @@ export const syncTodayActivity = async (userId, ghResult) => {
   if (!userId) return null;
 
   const todayStr = getKolkataDateString();
-  const checkedAt = new Date().toISOString();
 
   try {
-    // Only upsert COMMITTED or PENDING status (ERROR is handled separately in state to avoid marking DB as error)
+    let effectiveStatus = ghResult.status;
+
+    // Apply check via idempotent RPC which handles late commit debt reversal
     if (ghResult.status === 'COMMITTED' || ghResult.status === 'PENDING') {
-      const upsertData = {
-        user_id: userId,
-        activity_date: todayStr,
-        status: ghResult.status,
-        commit_count: ghResult.commitCount,
-        latest_commit_at: ghResult.latestCommit?.timestamp || null,
-        latest_commit_repo: ghResult.latestCommit?.repo || null,
-        checked_at: checkedAt
-      };
+      const { data: rpcData, error: rpcError } = await supabase.rpc('apply_user_daily_check', {
+        p_user_id: userId,
+        p_date: todayStr,
+        p_status: ghResult.status,
+        p_commit_count: ghResult.commitCount || 0,
+        p_repo: ghResult.latestCommit?.repo || null,
+        p_latest_commit_at: ghResult.latestCommit?.timestamp || null
+      });
 
-      const { error: upsertError } = await supabase
-        .from('daily_activity')
-        .upsert(upsertData, { onConflict: 'user_id, activity_date' });
-
-      if (upsertError) {
-        console.error('Error upserting daily_activity:', upsertError.message);
+      if (rpcError) {
+        console.error('Error applying daily check via RPC:', rpcError.message);
+        // Fallback upsert
+        const checkedAt = new Date().toISOString();
+        await supabase
+          .from('daily_activity')
+          .upsert({
+            user_id: userId,
+            activity_date: todayStr,
+            status: ghResult.status,
+            commit_count: ghResult.commitCount || 0,
+            latest_commit_at: ghResult.latestCommit?.timestamp || null,
+            latest_commit_repo: ghResult.latestCommit?.repo || null,
+            checked_at: checkedAt
+          }, { onConflict: 'user_id, activity_date' });
+      } else if (rpcData && rpcData.length > 0) {
+        effectiveStatus = rpcData[0].updated_status || ghResult.status;
       }
     }
 
@@ -156,7 +167,7 @@ export const syncTodayActivity = async (userId, ghResult) => {
       console.error('Error updating profile streaks:', profileUpdateError.message);
     }
 
-    return streaks;
+    return { ...streaks, effectiveStatus };
 
   } catch (err) {
     console.error('Exception syncing today activity:', err);

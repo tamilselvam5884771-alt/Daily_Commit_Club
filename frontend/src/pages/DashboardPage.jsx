@@ -54,15 +54,19 @@ export default function DashboardPage() {
       const ghResult = await checkTodayGithubActivity(profile.github_username);
 
       if (ghResult.success) {
-        setActivityStatus(ghResult.status);
         setCommitCount(ghResult.commitCount);
         setLatestCommit(ghResult.latestCommit);
 
         // 2. Sync to Supabase & update streaks
+        let finalStatus = ghResult.status;
         if (profile?.id) {
-          await syncTodayActivity(profile.id, ghResult);
+          const syncRes = await syncTodayActivity(profile.id, ghResult);
+          if (syncRes?.effectiveStatus) {
+            finalStatus = syncRes.effectiveStatus;
+          }
           await refreshProfile();
         }
+        setActivityStatus(finalStatus);
       } else {
         setActivityStatus('ERROR');
         setErrorMessage(ghResult.errorMsg || 'Unable to check GitHub activity.');

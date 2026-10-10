@@ -12,56 +12,53 @@ Deno.serve(async (req: Request) => {
     const formatter = new Intl.DateTimeFormat('en-CA', options as any);
     const todayKolkataStr = formatter.format(new Date());
 
-    // 1. Fetch all registered profiles
-    const { data: profiles, error: profErr } = await supabase.from('profiles').select('id, github_username, name');
+    // 1. Fetch only Daily Commit Club profiles (must have valid github_username)
+    const { data: profiles, error: profErr } = await supabase
+      .from('profiles')
+      .select('id, github_username, name')
+      .not('github_username', 'is', null);
+
     if (profErr) throw profErr;
 
     let processedCount = 0;
     let committedCount = 0;
     let missedCount = 0;
     let errorCount = 0;
+    let reversedCount = 0;
 
     for (const user of (profiles || [])) {
       processedCount++;
-      const username = user.github_username;
+      const username = user.github_username?.trim();
+
+      if (!username || username === 'https:' || username.startsWith('http')) {
+        continue;
+      }
 
       // Check existing status for today
       const { data: existingAct } = await supabase
         .from('daily_activity')
-        .select('status')
+        .select('status, penalty_applied')
         .eq('user_id', user.id)
         .eq('activity_date', todayKolkataStr)
         .maybeSingle();
 
       const existingStatus = existingAct?.status;
-      if (existingStatus === 'COMMITTED' || existingStatus === 'MISSED') {
-        // Already final for today
-        if (existingStatus === 'COMMITTED') committedCount++;
-        if (existingStatus === 'MISSED') missedCount++;
-        continue;
-      }
-
-      // Perform GitHub check
-      if (!username) {
-        await supabase.rpc('apply_user_daily_check', {
-          p_user_id: user.id,
-          p_date: todayKolkataStr,
-          p_status: 'ERROR',
-          p_commit_count: 0,
-          p_repo: null,
-          p_latest_commit_at: null
-        });
-        errorCount++;
+      // If already COMMITTED today, commitment is already fulfilled for this date
+      if (existingStatus === 'COMMITTED') {
+        committedCount++;
         continue;
       }
 
       try {
         const ghRes = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}/events/public`, {
-          headers: { 'Accept': 'application/vnd.github.v3+json' }
+          headers: { 
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'DailyCommitClub-VerificationBot'
+          }
         });
 
         if (!ghRes.ok) {
-          // GitHub API failure -> mark ERROR, do NOT mark MISSED
+          // GitHub API failure (rate limit 403/429, network error, etc.) -> mark ERROR, NEVER penalty
           await supabase.rpc('apply_user_daily_check', {
             p_user_id: user.id,
             p_date: todayKolkataStr,
@@ -84,7 +81,8 @@ Deno.serve(async (req: Request) => {
               const evDateStr = formatter.format(new Date(ev.created_at));
               if (evDateStr === todayKolkataStr) {
                 const commits = ev.payload?.commits || [];
-                todayCommits += (commits.length > 0 ? commits.length : 1);
+                const numCommits = commits.length > 0 ? commits.length : (ev.payload?.size || 1);
+                todayCommits += numCommits;
                 if (!latestCommit) {
                   latestCommit = {
                     repo: ev.repo?.name || 'GitHub Repo',
@@ -97,6 +95,7 @@ Deno.serve(async (req: Request) => {
         }
 
         if (todayCommits > 0) {
+          const wasPenalized = existingAct?.penalty_applied === true;
           await supabase.rpc('apply_user_daily_check', {
             p_user_id: user.id,
             p_date: todayKolkataStr,
@@ -106,8 +105,11 @@ Deno.serve(async (req: Request) => {
             p_latest_commit_at: latestCommit?.timestamp || null
           });
           committedCount++;
+          if (wasPenalized) {
+            reversedCount++;
+          }
         } else {
-          // Confirmed 0 commits -> mark MISSED
+          // Confirmed 0 commits -> mark MISSED (applies or retains idempotent penalty)
           await supabase.rpc('apply_user_daily_check', {
             p_user_id: user.id,
             p_date: todayKolkataStr,
@@ -139,7 +141,8 @@ Deno.serve(async (req: Request) => {
       processedCount,
       committedCount,
       missedCount,
-      errorCount
+      errorCount,
+      reversedCount
     }), {
       headers: { "Content-Type": "application/json" }
     });
