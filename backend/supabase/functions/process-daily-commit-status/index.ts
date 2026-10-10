@@ -12,10 +12,10 @@ Deno.serve(async (req: Request) => {
     const formatter = new Intl.DateTimeFormat('en-CA', options as any);
     const todayKolkataStr = formatter.format(new Date());
 
-    // 1. Fetch only Daily Commit Club profiles (must have valid github_username)
+    // 1. Fetch Daily Commit Club profiles with emails
     const { data: profiles, error: profErr } = await supabase
       .from('profiles')
-      .select('id, github_username, name')
+      .select('id, github_username, name, email, internal_email')
       .not('github_username', 'is', null);
 
     if (profErr) throw profErr;
@@ -25,6 +25,9 @@ Deno.serve(async (req: Request) => {
     let missedCount = 0;
     let errorCount = 0;
     let reversedCount = 0;
+    let emailsSent = 0;
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     for (const user of (profiles || [])) {
       processedCount++;
@@ -119,6 +122,59 @@ Deno.serve(async (req: Request) => {
             p_latest_commit_at: null
           });
           missedCount++;
+
+          // Send 8:00 PM email notification to real user email
+          const recipientEmail = user.email || user.internal_email;
+          if (recipientEmail && recipientEmail.includes('@')) {
+            try {
+              // 1. Record notification in notifications table
+              await supabase.from('notifications').insert({
+                user_id: user.id,
+                type: 'MISSED_COMMIT_REMINDER',
+                title: '☕ Daily Commit Club: 8:00 PM Commit Alert',
+                message: `Hi ${user.name || 'Member'}, zero commits were detected for today (${todayKolkataStr}) before the 8:00 PM IST evaluation cutoff. A provisional coffee debt of 1 cup has been added. You can still push a commit before 11:59 PM IST tonight to automatically reverse this debt!`,
+                scheduled_for: new Date().toISOString(),
+                sent_at: new Date().toISOString(),
+                status: 'SENT'
+              });
+
+              // 2. Dispatch email via Resend if API key is configured
+              if (resendApiKey) {
+                const emailRes = await fetch('https://api.resend.com/emails', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${resendApiKey}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    from: 'Daily Commit Club <onboarding@resend.dev>',
+                    to: [recipientEmail],
+                    subject: '☕ Daily Commit Club: 8:00 PM Commit Deadline Alert',
+                    html: `
+                      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #030f0a; color: #ecfdf5; padding: 24px; border-radius: 8px; max-width: 600px;">
+                        <h2 style="color: #f87171; margin-top: 0;">☕ Daily Commit Club — 8:00 PM IST Alert</h2>
+                        <p style="font-size: 16px;">Hi <strong>${user.name || 'Member'}</strong>,</p>
+                        <p>No commits were detected for your GitHub account (<strong>@${username}</strong>) today (<strong>${todayKolkataStr}</strong>) by the 8:00 PM IST evaluation cutoff.</p>
+                        <div style="background: #1c0a0a; border-left: 4px solid #ef4444; padding: 12px; margin: 16px 0; border-radius: 4px;">
+                          <p style="margin: 0; color: #fca5a5; font-weight: bold;">Provisional Coffee Debt: +1 Cup ☕</p>
+                        </div>
+                        <p style="color: #34d399; font-size: 15px;">
+                          <strong>Late Commit Rule:</strong> You have until <strong>11:59 PM IST</strong> tonight! Push at least 1 commit before midnight and sync your dashboard to automatically reverse this coffee debt.
+                        </p>
+                        <hr style="border: 0; border-top: 1px solid #0d422c; margin: 20px 0;" />
+                        <p style="color: #86efac; font-size: 12px; margin: 0;">Daily Commit Club • Asia/Kolkata (IST)</p>
+                      </div>
+                    `
+                  })
+                });
+                if (emailRes.ok) {
+                  emailsSent++;
+                }
+              }
+            } catch (mailErr) {
+              console.error(`Error sending email to ${recipientEmail}:`, mailErr);
+            }
+          }
         }
 
       } catch (err) {
@@ -142,7 +198,8 @@ Deno.serve(async (req: Request) => {
       committedCount,
       missedCount,
       errorCount,
-      reversedCount
+      reversedCount,
+      emailsSent
     }), {
       headers: { "Content-Type": "application/json" }
     });

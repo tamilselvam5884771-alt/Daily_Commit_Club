@@ -10,7 +10,8 @@ import {
   ShieldCheck,
   User,
   Lock,
-  Github
+  Github,
+  Mail
 } from 'lucide-react';
 
 export default function AuthPage() {
@@ -22,6 +23,7 @@ export default function AuthPage() {
   
   // Registration fields
   const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
   const [regGithubUrl, setRegGithubUrl] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
@@ -77,10 +79,16 @@ export default function AuthPage() {
     resetMessages();
 
     const cleanName = regName.trim();
+    const cleanEmail = regEmail.trim();
     const cleanGithub = regGithubUrl.trim();
 
-    if (!cleanName || !cleanGithub || !regPassword || !regConfirmPassword) {
+    if (!cleanName || !cleanEmail || !cleanGithub || !regPassword || !regConfirmPassword) {
       setError('All fields are required.');
+      return;
+    }
+
+    if (!cleanEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -94,6 +102,7 @@ export default function AuthPage() {
 
     if (regPassword.length < 6) {
       setError('Password must be at least 6 characters long.');
+      return;
     }
 
     if (regPassword !== regConfirmPassword) {
@@ -105,6 +114,7 @@ export default function AuthPage() {
     try {
       await register({
         name: cleanName,
+        email: cleanEmail,
         githubUrl: cleanGithub,
         password: regPassword
       });
@@ -113,6 +123,7 @@ export default function AuthPage() {
       
       // Clear fields
       setRegName('');
+      setRegEmail('');
       setRegGithubUrl('');
       setRegPassword('');
       setRegConfirmPassword('');
@@ -316,6 +327,24 @@ export default function AuthPage() {
                   placeholder="e.g. Hariharasudhan"
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reg-email" className="form-label">
+                Email Address
+              </label>
+              <div className="input-container">
+                <input
+                  id="reg-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="developer@example.com"
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
                   className="form-input"
                 />
               </div>

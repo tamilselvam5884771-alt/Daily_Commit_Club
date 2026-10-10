@@ -88,17 +88,21 @@ export const AuthProvider = ({ children }) => {
     return `dcc_${cleanUser}@gmail.com`;
   };
 
-  // Registration flow
-  const register = async ({ name, githubUrl, password }) => {
+  // Registration flow with real email
+  const register = async ({ name, email, githubUrl, password }) => {
     const rawName = name.trim();
+    const rawEmail = (email || '').trim().toLowerCase();
     const rawGithubUrl = githubUrl.trim();
     const username = extractGithubUsername(rawGithubUrl);
+
+    if (!rawEmail || !rawEmail.includes('@')) {
+      throw new Error('Please enter a valid email address.');
+    }
 
     if (!username) {
       throw new Error('Please enter a valid GitHub profile URL (e.g. https://github.com/yourusername)');
     }
 
-    const internalEmail = generateInternalEmail(username);
     const formattedGithubUrl = rawGithubUrl.startsWith('http') ? rawGithubUrl : `https://github.com/${username}`;
 
     // Try fetching GitHub avatar
@@ -113,13 +117,14 @@ export const AuthProvider = ({ children }) => {
       console.warn('Could not fetch GitHub avatar directly:', e);
     }
 
-    // Supabase Auth SignUp
+    // Supabase Auth SignUp with real user email
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: internalEmail,
+      email: rawEmail,
       password: password,
       options: {
         data: {
           full_name: rawName,
+          email: rawEmail,
           github_username: username,
           github_url: formattedGithubUrl,
           github_avatar_url: avatarUrl
@@ -129,7 +134,7 @@ export const AuthProvider = ({ children }) => {
 
     if (authError) {
       if (authError.message?.toLowerCase().includes('already registered') || authError.status === 422) {
-        throw new Error('An account with this GitHub profile already exists. Please sign in.');
+        throw new Error('An account with this email or GitHub profile already exists. Please sign in.');
       }
       if (authError.status === 429 || authError.message?.toLowerCase().includes('rate limit')) {
         throw new Error('Too many attempts. If your account was already created, please try signing in.');
@@ -146,7 +151,7 @@ export const AuthProvider = ({ children }) => {
     // If session was not returned directly by signUp, log in immediately
     if (!activeSession) {
       const { data: loginData, error: loginErr } = await supabase.auth.signInWithPassword({
-        email: internalEmail,
+        email: rawEmail,
         password: password
       });
       if (loginErr) {
@@ -160,10 +165,11 @@ export const AuthProvider = ({ children }) => {
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: authData.user.id,
       name: rawName,
+      email: rawEmail,
+      internal_email: rawEmail,
       github_url: formattedGithubUrl,
       github_username: username,
       github_avatar_url: avatarUrl,
-      internal_email: internalEmail,
       current_streak: 0,
       longest_streak: 0,
       coffee_debt: 0
@@ -178,21 +184,24 @@ export const AuthProvider = ({ children }) => {
     return { user: authData.user, session: activeSession, profile: updatedProfile };
   };
 
-  // Login flow by Name / Username
+  // Login flow by Email, Name, or Username
   const login = async ({ name, password }) => {
     const inputClean = name.trim();
     
-    // Resolve internal email via get_login_email RPC
-    const { data: emailData } = await supabase.rpc('get_login_email', {
-      user_identifier: inputClean
-    });
-
     let targetEmail = null;
-    if (emailData && emailData.length > 0 && emailData[0].email) {
-      targetEmail = emailData[0].email;
+    if (inputClean.includes('@')) {
+      targetEmail = inputClean.toLowerCase();
     } else {
-      const usernameClean = extractGithubUsername(inputClean);
-      targetEmail = generateInternalEmail(usernameClean);
+      // Resolve email via get_login_email RPC
+      const { data: emailData } = await supabase.rpc('get_login_email', {
+        user_identifier: inputClean
+      });
+
+      if (emailData && emailData.length > 0 && emailData[0].email) {
+        targetEmail = emailData[0].email;
+      } else {
+        targetEmail = inputClean;
+      }
     }
 
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -201,7 +210,7 @@ export const AuthProvider = ({ children }) => {
     });
 
     if (authError) {
-      throw new Error('Invalid name/username or password. Please check your credentials.');
+      throw new Error('Invalid email/username or password. Please check your credentials.');
     }
 
     setUser(authData.user);
@@ -213,19 +222,22 @@ export const AuthProvider = ({ children }) => {
   const resetPassword = async (userIdentifier) => {
     const inputClean = userIdentifier.trim();
     if (!inputClean) {
-      throw new Error('Please enter your Name or GitHub username.');
+      throw new Error('Please enter your Email, Name, or GitHub username.');
     }
 
-    const { data: emailData } = await supabase.rpc('get_login_email', {
-      user_identifier: inputClean
-    });
-
     let targetEmail = null;
-    if (emailData && emailData.length > 0 && emailData[0].email) {
-      targetEmail = emailData[0].email;
+    if (inputClean.includes('@')) {
+      targetEmail = inputClean.toLowerCase();
     } else {
-      const usernameClean = extractGithubUsername(inputClean);
-      targetEmail = generateInternalEmail(usernameClean);
+      const { data: emailData } = await supabase.rpc('get_login_email', {
+        user_identifier: inputClean
+      });
+
+      if (emailData && emailData.length > 0 && emailData[0].email) {
+        targetEmail = emailData[0].email;
+      } else {
+        targetEmail = inputClean;
+      }
     }
 
     const { error: resetErr } = await supabase.auth.resetPasswordForEmail(targetEmail, {
